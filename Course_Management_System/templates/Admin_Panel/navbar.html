@@ -1,0 +1,37 @@
+<div class="sidebar-container">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-button" id="toggleSidebar">☰</button>
+        </div>
+        <ul class="sidebar-nav">
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'About' %}" class="menu-item"><i class="fa fa-info-circle"></i> About</a></li>
+                <li><a href="{% url 'Home' %}" class="menu-item"><i class="fa fa-home"></i> Home</a></li>
+                <li><a href="{% url 'Profile' %}" class="menu-item"><i class="fa fa-user"></i> Profile</a></li>
+                <li><a href="{% url 'Logout' %}" class="menu-item"><i class="fa fa-sign-out"></i> Logout</a></li>
+                
+                {% if user.is_staff and not user.is_superuser %}
+                    <li><a href="{% url 'Add_Student' %}" class="menu-item"><i class="fa fa-user-plus"></i> Create Student Profile</a></li>
+                    <li><a href="{% url 'enrollment_page' %}" class="menu-item"><i class="fa fa-graduation-cap"></i> Enroll Course</a></li>
+
+                {% endif %}
+                
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'Dashboard' %}" class="menu-item"><i class="fa fa-tachometer"></i> Dashboard</a></li>
+                    <li><a href="{% url 'Add_Course' %}" class="menu-item"><i class="fa fa-plus-circle"></i> Create Course</a></li>
+                    <li><a href="{% url 'Add_Student' %}" class="menu-item"><i class="fa fa-user-plus"></i> Add Student</a></li>
+                    <li><a href="{% url 'Manage_Students' %}" class="menu-item"><i class="fa fa-edit"></i> Manage Student</a></li>  
+                    <li><a href="{% url 'Manage_Enrollment' %}" class="menu-item"><i class="fa fa-edit"></i> Manage Enrolment</a></li>
+                    <li><a href="{% url 'Enroll' %}" class="menu-item"><i class="fa fa-graduation-cap"></i> Enroll</a></li>
+                {% endif %}
+            {% else %}
+                <li><a href="{% url 'Login' %}" class="menu-item"><i class="fa fa-user"></i> Admin Login</a></li>
+                <li><a href="{% url 'Login' %}" class="menu-item"><i class="fa fa-user"></i> User Login</a></li>
+                <li><a href="{% url 'Register' %}" class="menu-item"><i class="fa fa-user-plus"></i> Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    <div class="content">
+
+    </div>
+</div>

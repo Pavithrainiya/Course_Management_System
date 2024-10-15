@@ -1,0 +1,420 @@
+/* Sidebar Styles */
+.sidebar-container {
+    display: flex; /* Flexbox for sidebar and content */
+}
+
+.sidebar {
+    width: 250px; /* Default width */
+    height: 100vh; /* Full height */
+    background-color: #154660; /* Sidebar background color */
+    position: fixed; /* Fixed positioning */
+    top: 0;
+    left: 0;
+    transition: width 0.3s; /* Smooth width transition */
+}
+
+.sidebar.collapsed {
+    width: 70px; /* Collapsed width */
+}
+
+.sidebar-header {
+    display: flex; /* Flex for button and brand */
+    align-items: center;
+    justify-content: space-between; /* Space between button and brand */
+    padding: 10px; /* Padding */
+}
+
+.toggle-button {
+    background-color: transparent; /* Transparent background */
+    color: #eeb31c; /* Button color */
+    border: none; /* No border */
+    cursor: pointer; /* Pointer cursor */
+    font-size: 20px; /* Font size */
+}
+
+.sidebar-nav {
+    list-style: none; /* Remove bullets */
+    padding: 0; /* Remove padding */
+}
+
+.sidebar-nav li {
+    margin: 10px 0; /* Space between items */
+}
+
+.sidebar-nav li a {
+    color: #ffffff; /* Link color */
+    text-decoration: none; /* No underline */
+    display: block; /* Full-width clickable area */
+    padding: 10px 15px; /* Padding for links */
+    transition: background 0.3s; /* Smooth background transition */
+}
+
+.sidebar-nav li a:hover {
+    background-color: #eeb31c; /* Background color on hover */
+    color: #154660; /* Text color on hover */
+}
+
+.content {
+    margin-left: 250px; /* Space for sidebar */
+    padding: 20px; /* Content padding */
+    transition: margin-left 0.3s; /* Smooth margin transition */
+}
+
+.content.collapsed {
+    margin-left: 70px; /* Adjusted space for collapsed sidebar */
+}
+
+.navbar-brand.collapsed {
+    display: none; /* Hide the brand when collapsed */
+}
+.navbar-brand:hover {
+
+    color: #f38e00; /* Show the name by default */
+}
+.menu-item span {
+    display: inline; /* Default show */
+}
+
+.color{
+	background-color:#eeb31c;
+	border-color:#154660;
+}
+h1 {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    color: transparent;
+    background: linear-gradient(90deg, yellow, #154660, rgb(213, 150, 3));
+    background-clip: text;
+    -webkit-background-clip: text;
+    background-size: 200%;
+    animation: moveGradient 3s infinite linear;
+}
+
+@keyframes moveGradient {
+    0% {
+        background-position: 0%;
+    }
+    100% {
+        background-position: 200%;
+    }
+}
+.well{
+	box-shadow:2px 2px 15px 0px black;
+}
+
+.logout{
+	margin-top: 16px; 
+	border: none;
+	background: none;
+	cursor: pointer;
+	color:white;
+	font-size: 19px;
+}
+
+.logout logut.hover{
+	color: #154660;
+	font-size:20px;
+}
+
+/* main.css */
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 90%;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.hero-section {
+    background-color: #ffffff65;
+    color: white;
+    padding: 60px 0;
+    text-align: center;
+    margin-top: 65px; /* Adjust this based on the height of your navbar */
+}
+
+.hero-section h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.about-us,.team{
+  
+    background-color: #fee13c65;
+    padding: 40px 0;
+    margin-top: 20px;
+    border-radius: 10px;
+}
+.services, .contact {
+    
+    background-color: white;
+    padding: 40px 0;
+    margin-top: 20px;
+    border-radius: 10px;
+}
+
+h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #555;
+    text-align: center;
+}
+
+.services-list {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.service-item {
+    width: 30%;
+    background-color: #f9f9f9;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.service-item h3 {
+    color: #007bff;
+    font-size: 1.5em;
+}
+
+.team-grid {
+    display: flex;
+    justify-content: space-around;
+}
+
+.team-member {
+    text-align: center;
+}
+
+.team-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.contact-info {
+    text-align: center;
+}
+
+.contact-info p {
+    font-size: 1.2em;
+    color: #007bff;
+}
+
+/* Container Styles */
+.container {
+    max-width: 600px; /* Maximum width of the form */
+    margin: 50px auto; /* Center the container */
+    padding: 20px; /* Padding around the container */
+    background-color: #ffffff; /* White background for the form */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Title Styles */
+.form-title {
+    text-align: center; /* Center align the title */
+    color: #154660; /* Dark color for the title */
+    margin-bottom: 20px; /* Space below the title */
+}
+
+/* Form Styles */
+.student-form {
+    display: flex; /* Flexbox for alignment */
+    flex-direction: column; /* Stack elements vertically */
+}
+
+.student-form p {
+    margin-bottom: 15px; /* Space between fields */
+}
+
+/* Button Styles */
+.submit-button {
+    background-color: #eeb31c; /* Button background color */
+    color: #ffffff; /* Text color */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    padding: 10px 15px; /* Padding for the button */
+    cursor: pointer; /* Pointer cursor */
+    font-size: 16px; /* Font size */
+    transition: background-color 0.3s; /* Smooth transition */
+}
+
+.submit-button:hover {
+    background-color: #154660; /* Darken on hover */
+}
+
+/* Message Styles */
+.message-container {
+    margin-top: 20px; /* Space above messages */
+}
+
+.alert {
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Dark red text color */
+    padding: 15px; /* Padding around the alert */
+    border-radius: 5px; /* Rounded corners */
+    margin-bottom: 10px; /* Space below alerts */
+}
+
+/* Container Styles */
+.course-container {
+    max-width: 600px; /* Maximum width for the form */
+    margin: 50px auto; /* Center the container */
+    padding: 20px; /* Padding around the container */
+    background-color: #ffffff; /* White background */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Header Styles */
+.page-header {
+    text-align: center; /* Center align the title */
+    color: #154660; /* Dark color for the title */
+    margin-bottom: 20px; /* Space below the title */
+}
+
+/* Form Styles */
+.course-form {
+    display: flex; /* Flexbox for alignment */
+    flex-direction: column; /* Stack elements vertically */
+}
+
+/* Button Container */
+.button-container {
+    display: flex; /* Flexbox for buttons */
+    justify-content: space-between; /* Space between buttons */
+}
+
+/* Form Group Styles */
+.form-group {
+    margin-bottom: 15px; /* Space between fields */
+}
+
+/* Button Styles */
+.btn {
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    padding: 10px 15px; /* Padding for buttons */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor */
+    transition: background-color 0.3s; /* Smooth transition */
+}
+
+.submit-button {
+    background-color: #4caf50; /* Green background for submit button */
+    color: white; /* White text */
+}
+
+.submit-button:hover {
+    background-color: #45a049; /* Darken on hover */
+}
+
+.reset-button {
+    background-color: #f44336; /* Red background for reset button */
+    color: white; /* White text */
+}
+
+.reset-button:hover {
+    background-color: #da190b; /* Darken on hover */
+}
+
+.table-wrapper {
+    overflow-x: auto; /* Enables horizontal scrolling */
+    margin: 20px 0; /* Adds margin around the table */
+}
+
+.table {
+    width: 100%; /* Makes the table take full width of the container */
+    border-collapse: collapse; /* Collapses table borders */
+}
+
+.table th, .table td {
+    padding: 10px; /* Adds padding to cells */
+    border: 1px solid #ddd; /* Adds border to cells */
+    text-align: left; /* Aligns text to the left */
+}
+
+.table th {
+    background-color: #f2f2f2; /* Light gray background for header */
+}
+
+.btn-warning, .btn-danger {
+    padding: 8px 12px; /* Padding for buttons */
+    color: white; /* Button text color */
+    text-decoration: none; /* Removes underline from links */
+    border-radius: 5px; /* Rounded corners for buttons */
+    display: inline-block; /* Ensures buttons are displayed inline */
+}
+
+.btn-warning {
+    background-color: orange; /* Background color for update button */
+    color: white; /* Text color */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Slightly reduced rounded corners */
+    padding: 5px 10px; /* Reduced padding for smaller size */
+    font-size: 14px; /* Smaller font size */
+    font-weight: bold; /* Bold text */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Transition for hover effect */
+}
+
+.btn-warning:hover {
+    background-color: darkorange; /* Darker shade on hover */
+    transform: scale(1.05); /* Slightly enlarge button on hover */
+}
+
+.btn-danger {
+    background-color: red; /* Background color for delete button */
+    color: white; /* Text color */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Slightly reduced rounded corners */
+    padding: 5px 10px; /* Reduced padding for smaller size */
+    font-size: 14px; /* Smaller font size */
+    font-weight: bold; /* Bold text */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Transition for hover effect */
+}
+
+.btn-danger:hover {
+    background-color: darkred; /* Darker shade on hover */
+    transform: scale(1.05); /* Slightly enlarge button on hover */
+}
+
+/* Media query for responsiveness */
+@media (max-width: 768px) {
+    .table-wrapper {
+        overflow-x: scroll; /* Allow horizontal scrolling on small screens */
+    }
+    .table th, .table td {
+        display: block; /* Makes table rows stack vertically */
+        width: 100%; /* Ensures full width for blocks */
+    }
+    .table tr {
+        margin-bottom: 15px; /* Space between rows */
+        display: block; /* Stacks rows */
+    }
+    .table th {
+        position: relative; /* Allows for stacking of headers */
+        padding: 10px 5px; /* Adjusts padding for small screens */
+    }
+}

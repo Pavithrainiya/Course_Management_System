@@ -1,0 +1,29 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h2>Enroll in Courses</h2>
+<div class="container course-container">
+    {% for course in courses %}
+    <form method="POST" action="{% url 'enroll_course' course.id %}">
+        {% csrf_token %}
+        {% endfor %} 
+        <label for="course_id">Available Courses:</label>
+        <select name="course_id" id="course_id" required>
+            {% for course in courses %}  
+            <option value="">Select a course</option>
+                <option value="{{ course.id }}">{{ course.CourseName }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Enroll</button>
+    </form>
+
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="alert">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

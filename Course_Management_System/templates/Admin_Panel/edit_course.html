@@ -1,0 +1,39 @@
+{% extends "index.html" %}
+
+{% block title %}
+   Edit Course 
+{% endblock title %}
+
+{% block content %}
+
+<div class="container course-container">
+    <div class="row">
+        <div class="col-12">
+            <h3 class="page-header text-primary" style="padding-top: 5%; padding-left: 35%; display: flex;">Update Course</h3>
+            <form action="/update_course/{{ course.id }}/" autocomplete="off" method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="course_name">Course Name</label>
+                    <input type="text" class="form-control" placeholder="Enter Course Name" name="name" value="{{ course.CourseName}}">
+                </div>
+
+                <div class="form-group">
+                    <label for="course_code">Course Code</label>
+                    <input type="text" class="form-control" placeholder="Enter Course Code" name="code" value="{{ course.CourseId }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" placeholder="Enter Course Description" name="description">{{ course.Description }}</textarea>
+                </div>
+
+                <input type="submit" value="Update" style="background-color: rgb(22, 140, 213); color: white; margin-top: 10px; border-radius: 7px;">
+                <input type="reset" value="Reset" style="background-color: red; color: white; border-radius: 7px;">
+                
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

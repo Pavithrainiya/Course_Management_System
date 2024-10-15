@@ -1,0 +1,23 @@
+{% extends "index.html" %}
+
+{% block title %}
+   Edit Course 
+{% endblock title %}
+
+{% block content %}
+
+<div class="container-fluid well" style="padding-top: 2%; padding-left: 10%; padding-right: 10%;">
+    <div class="row">
+        <div class="col-12">
+            <h3 class="page-header text-primary" style="padding-top: 5%; padding-left: 43%; display: flex;">Update Course</h3>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}  <!-- This will render the form fields as paragraph elements -->
+
+                <button style="position: relative;"  type="submit">Update Student</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,95 @@
+{% extends 'index.html' %}
+
+{% block title %}
+   Course Management System
+{% endblock title %}
+{% load static %} 
+{% block content %}
+<h1 style="padding-bottom: 2%;">Course Management System</h1>
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            
+            <h4 style="color:rgb(16, 138, 237)">Welcome to Our Learning Platform</h4>
+            <p>Your trusted partner in Course Management and Educational Growth</p>
+        </div>
+    </div>
+</section>
+
+<section class="about-us">
+    <div class="container">
+        <h2>About Us</h2>
+        <p>
+            We are dedicated to revolutionizing how educational institutions manage their courses and students. 
+            Our Course Management System is designed to streamline operations, improve efficiency, and 
+            foster an engaging learning environment. With over 20 years of experience, we have served clients 
+            across various educational sectors and helped them achieve their academic goals.
+        </p>
+    </div>
+</section>
+
+<section class="services">
+    <div class="container">
+        <h2>Our Services</h2>
+        <div class="services-list">
+            <div class="service-item">
+                <h3>Course Management</h3>
+                <p>
+                    Manage your courses efficiently with our comprehensive tools for enrollment tracking, 
+                    syllabus management, and grade assessments.
+                </p>
+            </div>
+            <div class="service-item">
+                <h3>Student Analytics</h3>
+                <p>
+                    Leverage data-driven insights to make informed decisions and optimize your student engagement. 
+                    Our analytics tools provide detailed reports on student performance and course metrics.
+                </p>
+            </div>
+            <div class="service-item">
+                <h3>Administrative Solutions</h3>
+                <p>
+                    Our administrative solutions are designed to simplify course scheduling, onboarding, and 
+                    student retention, ensuring that your institution runs smoothly and effectively.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="team">
+    <div class="container">
+        <h2>Meet Our Team</h2>
+        <div class="team-grid">
+            <div class="team-member">
+                <img src="{% static '/images/team1.png' %}" alt="Team Member 1" class="team-photo">
+                <h3>John Doe</h3>
+                <p>CEO & Founder</p>
+            </div>
+            <div class="team-member">
+                <img src="{% static '/images/team2.png' %}" alt="Team Member 2" class="team-photo">
+                <h3>Jane Smith</h3>
+                <p>Head of Course Development</p>
+            </div>
+            <div class="team-member">
+                <img src="{% static '/images/team3.png' %}" alt="Team Member 3" class="team-photo">
+                <h3>Michael Johnson</h3>
+                <p>CTO</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="contact">
+    <div class="container">
+        <h2>Contact Us</h2>
+        <p>Have any questions? Feel free to reach out to us!</p>
+        <div class="contact-info">
+            <p>Email: info@mylearningplatform.com</p>
+            <p>Phone: +917299025956</p>
+            <p>Address: KSR Kalvi Nagar, Tiruchengode, India</p>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}

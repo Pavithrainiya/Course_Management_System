@@ -1,0 +1,65 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container-fluid" style="margin-top:100px;">
+    <div class="col-md-offset-4 col-md-4">
+        {% if user.is_staff %}
+            <table class="table table-bordered">
+                <tr>
+                    <h3 class="text-primary page-header text-center">User Details</h3>
+                </tr>
+                <tbody>
+                    <tr>
+                        <th scope="col">User Name</th>
+                        <td>{{ uname }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="col">Email</th>
+                        <td>{{ umail }}</td>
+                    </tr>
+                    {% if student %}
+                        <tr>
+                            <th scope="col">Student ID</th>
+                            <td>{{ student.id }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="col">Course</th>
+                            {% for enrollment in enrollments %}   
+                            <td>{{ enrollment.course.CourseName }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th scope="col">First Name</th>
+                            <td>{{ student.FirstName }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="col">Last Name</th>
+                            <td>{{ student.LastName }}</td>
+                        </tr>
+                        
+                        <tr>
+                            <th scope="col">Department</th>
+                            <td>{{ student.Department }}</td>
+                        </tr>
+                        <!-- Add any additional student details here -->
+                    {% else %}
+                        <tr>
+                            <td colspan="2">No additional student information found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        {% else %}
+        <tbody>
+            <tr>
+                <th scope="col">User Name</th>
+                <td>{{ uname }}</td>
+            </tr>
+            <tr>
+                <th scope="col">Email</th>
+                <td>{{ umail }}</td>
+            </tr>
+        </tbody>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

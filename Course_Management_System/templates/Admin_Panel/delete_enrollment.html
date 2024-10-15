@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <h2>Are you sure you want to delete this enrollment?</h2>
+    <p>Student: <strong>{{ enrollment.student.first_name }} {{ enrollment.student.last_name }}</strong></p>
+    <p>Course: <strong>{{ enrollment.course.name }} ({{ enrollment.course.code }})</strong></p>
+    <form method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+      <a href="{% url 'Home' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+{% endblock %}

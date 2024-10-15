@@ -1,0 +1,27 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h2>Enroll in Courses</h2>
+<div class="container course-container">
+    <form method="POST" action="{% url 'Enroll' %}">
+        {% csrf_token %}
+        <label for="student_id">Student:</label>
+        <select name="student_id" id="student_id" required>
+            <option value="">Select a student</option>
+            {% for student in students %}
+                <option value="{{ student.id }}">{{ student.FirstName }} {{ student.LastName }}</option>
+            {% endfor %}
+        </select>
+    
+        <label for="course_id">Course:</label>
+        <select name="course_id" id="course_id" required>
+            <option value="">Select a course</option>
+            {% for course in courses %}
+                <option value="{{ course.id }}">{{ course.CourseName }}</option>
+            {% endfor %}
+        </select>
+    
+        <button type="submit">Enroll</button>
+    </form>
+
+{% endblock %}

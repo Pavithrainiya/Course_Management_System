@@ -1,0 +1,39 @@
+{% extends "index.html" %}
+
+{% block content %}
+<h2>Manage Enrollments</h2>
+<div class="container course-container">
+    <div class="table-responsive mt-4%">
+        {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}  
+    <table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>S.No</th>
+            <th>Course</th>
+            <th>Student</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for enrollment in enrollments %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ enrollment.course.CourseName }}</td>
+            <td>{{ enrollment.student }}</td>
+            <td>
+                <a href="{% url 'Update_Enrollment' enrollment.id %}">Edit</a> |
+                <a href="{% url 'Delete_Enrollment' enrollment.id %}">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+{% endblock %}
