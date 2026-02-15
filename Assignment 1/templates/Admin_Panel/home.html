@@ -1,0 +1,58 @@
+{% extends "index.html" %}
+
+{% block title %}
+   Home Page
+{% endblock title %}
+
+{% block content %} 
+
+    {% if user.is_authenticated and user.is_superuser %} 
+        
+        <h3 class="page-header text-primary" style="padding-top: 5%; text-align: center;">All Course Details</h3>
+        <div class="container">
+
+            {% if courses %}
+
+                    <table class="table">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}   
+
+                        <thead>
+                            <tr>
+                                <th scope="col">S.No</th>
+                                <th scope="col">Course Code</th>
+                                <th scope="col">Course Name</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Update</th>
+                                <th scope="col">Delete</th>
+                            </tr>
+                        </thead>
+                        
+                        <tbody>
+                        {% for course in courses %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ course.CourseId }}</td>
+                                <td>{{ course.CourseName }}</td>
+                                <td>{{ course.Description }}</td>
+                                <td><a class="btn-warning" href="/update_course/{{ course.id }}">Update</a></td>
+                                <td><a class="btn-danger" href="/delete_course/{{ course.id }}">Delete</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>         
+                    </table>
+
+            {% endif %}
+
+        </div>
+    
+    {% else %}
+        <h1>Welcome : {{ user.username }}</h1> 
+    {% endif %} 
+
+{% endblock %}

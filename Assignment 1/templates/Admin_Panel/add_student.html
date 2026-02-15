@@ -1,0 +1,19 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container">
+    <h2 class="form-title">Add New Student</h2>
+    <form method="post" class="student-form">
+        {% csrf_token %}
+        {{ form.as_p }}  <!-- Renders the form fields -->
+        <button type="submit" class="submit-button">Add Student</button>
+    </form>
+    
+    {% if messages %}
+        <div class="message-container">
+            {% for message in messages %}
+                <div class="alert">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

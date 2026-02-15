@@ -1,0 +1,34 @@
+{% extends "index.html" %}
+
+{% block title %}
+   Add Course
+{% endblock title %}
+
+{% block content %}
+<div class="container course-container">
+    <h3 class="page-header">Add Course</h3>
+    <form action="{% url 'Add_Course' %}" autocomplete="off" method="POST" class="course-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="name">Course Name</label>
+            <input type="text" class="form-control" placeholder="Enter Course Name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="code">Course Code</label>
+            <input type="text" class="form-control" placeholder="Enter Course Code" name="code" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" placeholder="Enter Course Description" name="description" rows="4" required></textarea>
+        </div>
+
+        <div class="button-container">
+            <input type="submit" value="Submit" class="btn submit-button">
+            <input type="reset" value="Reset" class="btn reset-button">
+        </div>
+    </form>
+</div>
+{% endblock content %}
