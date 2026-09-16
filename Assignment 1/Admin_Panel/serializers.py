@@ -31,16 +31,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'password', 'email', 'first_name', 'last_name', 'role', 'phone', 'department']
 
     def validate_password(self, value):
-        import re
-        if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long.")
-        if not re.search(r'[A-Z]', value):
-            raise serializers.ValidationError("Password must contain at least 1 uppercase letter.")
-        if not re.search(r'[0-9]', value):
-            raise serializers.ValidationError("Password must contain at least 1 number.")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
-            raise serializers.ValidationError("Password must contain at least 1 special character (!@#$%^&*).")
+        if len(value) < 4:
+            raise serializers.ValidationError("Password must be at least 4 characters long.")
         return value
+
 
     def create(self, validated_data):
         role = validated_data.pop('role', 'STUDENT')

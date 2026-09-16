@@ -22,33 +22,48 @@ export const RegisterPage = () => {
 
   // Password Validation Rules
   const password = formData.password;
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  const hasMinLength = password.length >= 8;
-  const isPasswordValid = hasUppercase && hasNumber && hasSpecial && hasMinLength;
+  const hasMinLength = password.length >= 4;
+  const isPasswordValid = hasMinLength;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!isPasswordValid) {
-      setError('Password does not meet all safety requirements (must include 1 Uppercase, 1 Number, 1 Special Symbol, and min 8 characters).');
+      setError('Password must be at least 4 characters long.');
       return;
     }
 
     try {
       await register(formData);
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 1500);
+      try {
+        await login(formData.username, formData.password);
+        navigate(formData.role === 'ADMIN' ? '/admin' : '/courses');
+      } catch (loginErr) {
+        setTimeout(() => navigate('/login'), 1500);
+      }
     } catch (err) {
-      setError(err.response?.data?.username?.[0] || err.response?.data?.password?.[0] || err.response?.data?.detail || 'Registration failed');
+      console.error('Registration error:', err);
+      const data = err.response?.data;
+      let msg = 'Registration failed. Please check your inputs.';
+      if (typeof data === 'object' && data !== null) {
+        const firstKey = Object.keys(data)[0];
+        const val = data[firstKey];
+        msg = Array.isArray(val) ? `${firstKey}: ${val[0]}` : (val || msg);
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setError(msg);
     }
   };
+
 
   return (
     <div className="container" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 24px' }}>
