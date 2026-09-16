@@ -158,6 +158,10 @@ export const LoginPage = () => {
               />
               <button
                 type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -165,23 +169,25 @@ export const LoginPage = () => {
                 }}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '10px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'none',
+                  background: 'transparent',
                   border: 'none',
                   color: showPassword ? 'var(--accent-cyan)' : 'var(--text-muted)',
                   cursor: 'pointer',
-                  padding: '6px',
+                  padding: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 10
+                  zIndex: 50,
+                  pointerEvents: 'auto'
                 }}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={18} color="var(--accent-cyan)" /> : <Eye size={18} />}
               </button>
+
             </div>
           </div>
 
