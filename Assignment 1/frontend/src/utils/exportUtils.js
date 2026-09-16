@@ -1,6 +1,6 @@
 /**
  * Robust Export Utilities for Course Management System
- * Supports CSV generation and PDF Print Export with key matching
+ * Supports CSV generation and PDF Print Export with key matching and dual fallbacks
  */
 
 const getRowValue = (row, header) => {
@@ -8,7 +8,7 @@ const getRowValue = (row, header) => {
   if (row[header] !== undefined && row[header] !== null) {
     return row[header];
   }
-  // Try matching sanitized header string to object keys
+  // Match sanitized header string to object keys
   const sanitizedHeader = String(header).toLowerCase().replace(/[^a-z0-9]/g, '');
   const matchKey = Object.keys(row).find(k => {
     const sanitizedKey = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -20,19 +20,16 @@ const getRowValue = (row, header) => {
   return '';
 };
 
-export const exportToCSV = (filename, headers, rows) => {
-  if (!rows || !rows.length) {
-    alert('No data available to export.');
-    return;
-  }
-
+export const exportToCSV = (filename, headers, rows = []) => {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  
   try {
     const csvContent = [];
-    // Header row
+    // 1. Header row
     csvContent.push(headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','));
 
-    // Data rows
-    rows.forEach(row => {
+    // 2. Data rows
+    safeRows.forEach(row => {
       const rowValues = headers.map(header => {
         const val = getRowValue(row, header);
         return `"${String(val).replace(/"/g, '""')}"`;
@@ -40,42 +37,101 @@ export const exportToCSV = (filename, headers, rows) => {
       csvContent.push(rowValues.join(','));
     });
 
-    const blob = new Blob(['\ufeff' + csvContent.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const csvString = '\ufeff' + csvContent.join('\r\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fullFileName = `${filename}_${dateStr}.csv`;
+
+    // Standard Blob ObjectURL download
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
+    link.style.display = 'none';
     link.href = url;
-    link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.setAttribute('download', fullFileName);
+
     document.body.appendChild(link);
     link.click();
+
     setTimeout(() => {
-      document.body.removeChild(link);
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
       URL.revokeObjectURL(url);
-    }, 200);
+    }, 500);
   } catch (err) {
     console.error('CSV Export Error:', err);
-    alert('Error generating CSV file. Please try again.');
+    // Fallback Data URI download
+    try {
+      const encodedUri = encodeURI('data:text/csv;charset=utf-8,\ufeff' + headers.join(',') + '\r\n');
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `${filename}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (fallbackErr) {
+      alert('Failed to download CSV. Please check browser download permissions.');
+    }
   }
 };
 
-export const exportToPDF = (title, headers, rows, filename) => {
-  if (!rows || !rows.length) {
-    alert('No data available to export.');
-    return;
+export const exportToPDF = (title, headers, rows = [], filename = 'report') => {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  
+  let printWindow = null;
+  try {
+    printWindow = window.open('', '_blank', 'width=1050,height=850,scrollbars=yes,resizable=yes');
+  } catch (e) {
+    printWindow = null;
   }
 
-  const printWindow = window.open('', '_blank', 'width=1000,height=800');
   if (!printWindow) {
-    alert('Pop-up Blocked: Please allow pop-ups for this site in your browser to view and download the PDF report.');
+    // Fallback: create invisible iframe for printing if popup is blocked
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(generatePDFHtml(title, headers, safeRows));
+    doc.close();
+    
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 3000);
+    }, 500);
     return;
   }
 
+  printWindow.document.open();
+  printWindow.document.write(generatePDFHtml(title, headers, safeRows));
+  printWindow.document.close();
+};
+
+const generatePDFHtml = (title, headers, rows) => {
   const tableHeadersHtml = headers.map(h => `
     <th style="padding:12px; border:1px solid #cbd5e1; background:#0f172a; text-align:left; font-size:12px; font-weight:700; color:#f8fafc; text-transform:uppercase;">
       ${h}
     </th>
   `).join('');
 
-  const tableRowsHtml = rows.map((row, idx) => {
+  const tableRowsHtml = rows.length === 0 ? `
+    <tr>
+      <td colspan="${headers.length}" style="padding:24px; text-align:center; color:#64748b; font-size:13px; border:1px solid #e2e8f0;">
+        No records currently available for this report view.
+      </td>
+    </tr>
+  ` : rows.map((row, idx) => {
     const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
     const cells = headers.map(h => {
       const val = getRowValue(row, h);
@@ -84,7 +140,7 @@ export const exportToPDF = (title, headers, rows, filename) => {
     return `<tr style="background:${bg};">${cells}</tr>`;
   }).join('');
 
-  const html = `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -145,7 +201,4 @@ export const exportToPDF = (title, headers, rows, filename) => {
     </body>
     </html>
   `;
-
-  printWindow.document.write(html);
-  printWindow.document.close();
 };
