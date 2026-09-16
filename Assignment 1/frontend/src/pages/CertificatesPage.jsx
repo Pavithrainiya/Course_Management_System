@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Award, ShieldCheck, QrCode, Search, UserCheck, CheckCircle2, Sparkles, Filter, Printer, ArrowRight } from 'lucide-react';
 import { CertificateModal } from '../components/CertificateModal';
 import { ExportButtons } from '../components/ExportButtons';
 
 export const CertificatesPage = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+
   const [courses, setCourses] = useState([]);
   const [completedStudents, setCompletedStudents] = useState([]);
   const [issuedCertificates, setIssuedCertificates] = useState([]);
@@ -24,7 +29,7 @@ export const CertificatesPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [location.state]);
 
   const fetchData = async () => {
     try {
@@ -44,9 +49,35 @@ export const CertificatesPage = () => {
         ];
       }
       setCourses(courseList);
-      if (courseList.length > 0) {
+
+      const sName = user?.first_name ? `${user.first_name} ${user.last_name}` : (user?.username || 'Student');
+      if (!studentNameInput) {
+        setStudentNameInput(sName);
+      }
+
+      if (courseList.length > 0 && !selectedCourseId) {
         setSelectedCourseId(courseList[0].id.toString());
       }
+
+      if (location.state?.autoOpen) {
+        const targetCourseId = location.state.courseId ? location.state.courseId.toString() : (courseList[0]?.id?.toString() || '1');
+        setSelectedCourseId(targetCourseId);
+        const matchedCourse = courseList.find(c => c.id.toString() === targetCourseId || c.CourseId?.toString() === targetCourseId);
+        const cName = matchedCourse ? matchedCourse.CourseName : (location.state.quizTitle || 'Course Management System');
+
+        setCertificateModalData({
+          certificate_code: location.state.certCode || `CMS-${Math.floor(100000 + Math.random() * 900000)}`,
+          issued_at: new Date().toISOString()
+        });
+        setModalStudentName(sName);
+        setModalCourseName(cName);
+        setShowModal(true);
+        setStatusMessage({
+          type: 'success',
+          text: `🎉 Quiz Assessment Completed (${location.state.score ?? 100}%)! Official Certificate & Verification QR Generated.`
+        });
+      }
+
 
       const certs = certsRes?.certificates || [];
       let completed = certsRes?.completed_students || [];

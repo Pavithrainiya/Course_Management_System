@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { CheckCircle2, XCircle, Award, HelpCircle, ArrowRight, RotateCcw } from 'lucide-react';
+import { CheckCircle2, XCircle, Award, HelpCircle, ArrowRight, RotateCcw, Sparkles } from 'lucide-react';
 
 export const QuizRunner = ({ quiz, onComplete }) => {
+  const navigate = useNavigate();
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   if (!quiz || !quiz.questions || quiz.questions.length === 0) {
     return <div style={{ color: 'var(--text-secondary)', padding: '20px' }}>No questions in this quiz yet.</div>;
@@ -16,12 +19,39 @@ export const QuizRunner = ({ quiz, onComplete }) => {
     setAnswers(prev => ({ ...prev, [questionId]: optionKey }));
   };
 
+  const goToCertificate = () => {
+    navigate('/certificates', {
+      state: {
+        autoOpen: true,
+        courseId: quiz.course,
+        quizTitle: quiz.title,
+        score: result?.score,
+        passed: result?.passed,
+        certCode: result?.cert_code
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
       const data = await api.submitQuiz(quiz.id, answers);
       setResult(data);
       if (onComplete) onComplete(data);
+
+      setRedirecting(true);
+      setTimeout(() => {
+        navigate('/certificates', {
+          state: {
+            autoOpen: true,
+            courseId: quiz.course,
+            quizTitle: quiz.title,
+            score: data.score,
+            passed: data.passed,
+            certCode: data.cert_code
+          }
+        });
+      }, 1500);
     } catch (err) {
       alert('Failed to submit quiz.');
     } finally {
@@ -42,6 +72,32 @@ export const QuizRunner = ({ quiz, onComplete }) => {
           </div>
         )}
       </div>
+
+      {result && redirecting && (
+        <div style={{
+          padding: '16px 20px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          background: 'rgba(16, 185, 129, 0.15)',
+          border: '1px solid #10b981',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Sparkles size={20} color="#10b981" />
+            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+              Quiz Completed Successfully! Redirecting to Certificate Generated page...
+            </span>
+          </div>
+          <button onClick={goToCertificate} className="btn btn-aurora btn-sm">
+            <Award size={14} /> Go to Certificate Page
+          </button>
+        </div>
+      )}
 
       {/* Questions List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -85,7 +141,7 @@ export const QuizRunner = ({ quiz, onComplete }) => {
               {/* Result explanation breakdown if submitted */}
               {result && (
                 <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed var(--border-glass)', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                  💡 <strong>Explanation:</strong> {q.explanation || 'Select option is verified.'}
+                  💡 <strong>Explanation:</strong> {q.explanation || 'Selected option is verified.'}
                 </div>
               )}
             </div>
@@ -94,24 +150,34 @@ export const QuizRunner = ({ quiz, onComplete }) => {
       </div>
 
       {/* Submit / Reset Actions */}
-      <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+      <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
         {!result ? (
           <button
             onClick={handleSubmit}
             className="btn btn-primary"
             disabled={loading || Object.keys(answers).length === 0}
           >
-            {loading ? 'Evaluating...' : 'Submit Quiz Assessment'}
+            {loading ? 'Evaluating & Generating Certificate...' : 'Submit Quiz Assessment'}
           </button>
         ) : (
-          <button
-            onClick={() => { setResult(null); setAnswers({}); }}
-            className="btn btn-secondary"
-          >
-            <RotateCcw size={16} /> Retake Assessment
-          </button>
+          <>
+            <button
+              onClick={() => { setResult(null); setAnswers({}); setRedirecting(false); }}
+              className="btn btn-secondary"
+            >
+              <RotateCcw size={16} /> Retake Assessment
+            </button>
+            <button
+              onClick={goToCertificate}
+              className="btn btn-aurora"
+              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#fff', fontWeight: 700 }}
+            >
+              <Award size={16} /> View Generated Certificate Page <ArrowRight size={16} />
+            </button>
+          </>
         )}
       </div>
     </div>
   );
 };
+
