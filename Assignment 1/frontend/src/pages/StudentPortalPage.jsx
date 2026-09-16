@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { UserProfileDrawer } from '../components/UserProfileDrawer';
+import { ExportButtons } from '../components/ExportButtons';
 import { GraduationCap, BookOpen, Trash2, ArrowRight, CheckCircle2, Clock, User, Settings, ShieldCheck, KeyRound, Lock } from 'lucide-react';
 
 export const StudentPortalPage = () => {
@@ -13,7 +14,7 @@ export const StudentPortalPage = () => {
 
   useEffect(() => {
     fetchMyEnrollments();
-  }, []);
+  }, [user]);
 
   const fetchMyEnrollments = async () => {
     try {
@@ -47,9 +48,28 @@ export const StudentPortalPage = () => {
     <div className="container" style={{ padding: '40px 24px', flex: 1 }}>
       
 
-      <div className="page-header">
-        <h1 className="page-title">My Course Enrollments</h1>
-        <p className="page-subtitle">Track your registered academic courses and learning materials</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
+        <div>
+          <h1 className="page-title">My Course Enrollments</h1>
+          <p className="page-subtitle">Track your registered academic courses and learning materials</p>
+        </div>
+        {safeEnrollments.length > 0 && (
+          <ExportButtons
+            title={`${user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'Student'}'s Academic Course Enrollments`}
+            headers={['Course Code', 'Course Name', 'Category', 'Status', 'Enrolled Date']}
+            data={safeEnrollments.map(item => {
+              const c = item.course_details || {};
+              return {
+                'Course Code': c.CourseId || `CRS-${item.id}`,
+                'Course Name': c.CourseName || item.course_name || 'Course',
+                'Category': c.category || 'General',
+                'Status': item.status || 'Active',
+                'Enrolled Date': new Date(item.enrolled_at || Date.now()).toLocaleDateString()
+              };
+            })}
+            filename="my_enrolled_courses"
+          />
+        )}
       </div>
 
       {safeEnrollments.length === 0 ? (
@@ -66,8 +86,12 @@ export const StudentPortalPage = () => {
       ) : (
         <div className="grid-3">
           {safeEnrollments.map((item) => {
-            const course = item.course_details;
-            if (!course) return null;
+            const course = item.course_details || {
+              id: item.course,
+              CourseId: item.course,
+              CourseName: item.course_name || 'Enrolled Course',
+              Description: 'Registered academic course curriculum.'
+            };
             return (
               <div key={item.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <div style={{ padding: '24px', flex: 1 }}>
