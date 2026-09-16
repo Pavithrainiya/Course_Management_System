@@ -151,15 +151,15 @@ export const RegisterPage = () => {
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setShowPassword(prev => !prev);
                 }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setShowPassword(prev => !prev);
                 }}
                 style={{
                   position: 'absolute',
-                  right: '10px',
+                  right: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'transparent',
@@ -170,13 +170,14 @@ export const RegisterPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 50,
+                  zIndex: 100,
                   pointerEvents: 'auto'
                 }}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={18} color="var(--accent-cyan)" /> : <Eye size={18} />}
               </button>
+
 
             </div>
 
