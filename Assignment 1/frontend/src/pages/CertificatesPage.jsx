@@ -152,36 +152,31 @@ export const CertificatesPage = () => {
     }
 
     try {
-      setStatusMessage({ type: 'info', text: 'Generating verified certificate & QR code...' });
+      setStatusMessage({ type: 'info', text: 'Verifying course enrollment and completion status...' });
       const targetCourse = courses.find(c => c && c.id && (c.id.toString() === selectedCourseId.toString() || c.CourseId?.toString() === selectedCourseId.toString()));
       const courseName = targetCourse ? targetCourse.CourseName : 'Course Management System';
       const sName = studentNameInput.trim() || (user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : (user?.username || 'Student'));
 
-      let certResult = null;
-      try {
-        certResult = await api.generateCertificate({
-          student_name: sName,
-          course_id: selectedCourseId
-        });
-      } catch (errApi) {
-        console.warn('Backend generate certificate API fallback:', errApi);
-        certResult = {
-          certificate_code: `CMS-${Math.floor(100000 + Math.random() * 900000)}`,
-          student_name: sName,
-          course_name: courseName,
-          issued_at: new Date().toISOString()
-        };
+      const certResult = await api.generateCertificate({
+        student_name: sName,
+        course_id: selectedCourseId
+      });
+
+      if (certResult?.error) {
+        setStatusMessage({ type: 'error', text: certResult.error });
+        return;
       }
 
       setCertificateModalData(certResult);
-      setModalStudentName(sName);
+      setModalStudentName(certResult?.student_name || sName);
       setModalCourseName(courseName);
       setShowModal(true);
       setStatusMessage({ type: 'success', text: `Verified Certificate & QR generated for ${sName}!` });
       fetchData();
     } catch (err) {
       console.error("Certificate generation error:", err);
-      setStatusMessage({ type: 'error', text: err.response?.data?.error || 'Failed to generate certificate.' });
+      const errMsg = err?.response?.data?.error || 'Certificate Generation Denied: You must be enrolled in this course and complete all lessons or pass the course quiz to generate your certificate.';
+      setStatusMessage({ type: 'error', text: errMsg });
     }
   };
 

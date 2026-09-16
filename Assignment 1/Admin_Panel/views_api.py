@@ -708,12 +708,40 @@ class CertificateAPIView(APIView):
 
             course = Course.objects.filter(id=course_id).first()
             if not course:
+                course = Course.objects.filter(CourseId=course_id).first()
+            if not course:
                 return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
+            # 1. ENROLLMENT CHECK
+            enrollment = Enrollment.objects.filter(student=student, course=course).first()
+            if not enrollment:
+                return Response({
+                    'error': 'Certificate Locked: You are not enrolled in this course. You must enroll and complete the course to earn your certificate.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 2. COMPLETION & QUIZ ASSESSMENT CHECK
             cert = Certificate.objects.filter(student=student, course=course).first()
+            passed_quiz = QuizAttempt.objects.filter(student=student, quiz__course=course, passed=True).exists()
+            total_lessons = Lesson.objects.filter(module__course=course).count()
+            completed_lessons = LessonProgress.objects.filter(
+                student=student,
+                lesson__module__course=course,
+                completed=True
+            ).count()
+            all_lessons_completed = (total_lessons > 0 and completed_lessons >= total_lessons)
+            is_completed_status = (enrollment.status and enrollment.status.upper() in ['COMPLETED', 'GRADUATED', 'VERIFIED'])
+
+            if not (cert or passed_quiz or all_lessons_completed or is_completed_status):
+                return Response({
+                    'error': 'Certificate Locked: Course incomplete. You must complete 100% of course lessons or pass the course quiz to generate your verified certificate.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             if not cert:
-                # Check progress or auto-issue certificate for verified completion
-                cert = Certificate.objects.create(student=student, course=course, certificate_code=str(uuid.uuid4())[:8].upper())
+                cert = Certificate.objects.create(
+                    student=student,
+                    course=course,
+                    certificate_code=str(uuid.uuid4())[:8].upper()
+                )
 
             serializer = CertificateSerializer(cert)
             return Response(serializer.data)
@@ -737,18 +765,30 @@ class CertificateAPIView(APIView):
         completed_list = []
         for enc in enrollments:
             cert = Certificate.objects.filter(student=enc.student, course=enc.course).first()
-            completed_list.append({
-                'id': enc.id,
-                'student_id': enc.student.id,
-                'student_name': str(enc.student),
-                'username': enc.student.user.username if enc.student.user else enc.student.FirstName,
-                'course_id': enc.course.id,
-                'course_name': enc.course.CourseName,
-                'status': enc.status,
-                'certificate_code': cert.certificate_code if cert else None,
-                'issued_at': cert.issued_at if cert else None,
-                'is_completed': True
-            })
+            passed_quiz = QuizAttempt.objects.filter(student=enc.student, quiz__course=enc.course, passed=True).exists()
+            total_lessons = Lesson.objects.filter(module__course=enc.course).count()
+            completed_lessons = LessonProgress.objects.filter(
+                student=enc.student,
+                lesson__module__course=enc.course,
+                completed=True
+            ).count()
+            all_lessons_completed = (total_lessons > 0 and completed_lessons >= total_lessons)
+            is_completed_status = (enc.status and enc.status.upper() in ['COMPLETED', 'GRADUATED', 'VERIFIED'])
+
+            # Strictly include only enrolled students who have COMPLETED requirements or passed quiz
+            if cert or passed_quiz or all_lessons_completed or is_completed_status:
+                completed_list.append({
+                    'id': enc.id,
+                    'student_id': enc.student.id,
+                    'student_name': str(enc.student),
+                    'username': enc.student.user.username if enc.student.user else enc.student.FirstName,
+                    'course_id': enc.course.id,
+                    'course_name': enc.course.CourseName,
+                    'status': 'COMPLETED' if (cert or passed_quiz or all_lessons_completed) else enc.status,
+                    'certificate_code': cert.certificate_code if cert else None,
+                    'issued_at': cert.issued_at if cert else None,
+                    'is_completed': True
+                })
 
         return Response({
             'certificates': serializer.data,
@@ -768,6 +808,8 @@ class GenerateCertificateAPIView(APIView):
 
         course = Course.objects.filter(id=course_id).first()
         if not course:
+            course = Course.objects.filter(CourseId=course_id).first()
+        if not course:
             return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
         student = None
@@ -786,11 +828,36 @@ class GenerateCertificateAPIView(APIView):
         if not student:
             return Response({'error': 'No valid student profile found'}, status=status.HTTP_404_NOT_FOUND)
 
-        cert, created = Certificate.objects.get_or_create(
+        # 1. ENROLLMENT CHECK
+        enrollment = Enrollment.objects.filter(student=student, course=course).first()
+        if not enrollment:
+            return Response({
+                'error': f'Certificate generation denied: Student "{student}" is not enrolled in course "{course.CourseName}".'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. COMPLETION & QUIZ ASSESSMENT CHECK
+        cert = Certificate.objects.filter(student=student, course=course).first()
+        passed_quiz = QuizAttempt.objects.filter(student=student, quiz__course=course, passed=True).exists()
+        total_lessons = Lesson.objects.filter(module__course=course).count()
+        completed_lessons = LessonProgress.objects.filter(
             student=student,
-            course=course,
-            defaults={'certificate_code': str(uuid.uuid4())[:8].upper()}
-        )
+            lesson__module__course=course,
+            completed=True
+        ).count()
+        all_lessons_completed = (total_lessons > 0 and completed_lessons >= total_lessons)
+        is_completed_status = (enrollment.status and enrollment.status.upper() in ['COMPLETED', 'GRADUATED', 'VERIFIED'])
+
+        if not (cert or passed_quiz or all_lessons_completed or is_completed_status):
+            return Response({
+                'error': f'Certificate generation denied: Course "{course.CourseName}" is incomplete. The student must complete all lessons or pass the course quiz first.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not cert:
+            cert = Certificate.objects.create(
+                student=student,
+                course=course,
+                certificate_code=str(uuid.uuid4())[:8].upper()
+            )
 
         serializer = CertificateSerializer(cert)
         data = serializer.data
