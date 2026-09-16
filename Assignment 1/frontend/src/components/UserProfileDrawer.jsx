@@ -157,16 +157,16 @@ export const UserProfileDrawer = ({ isOpen, onClose }) => {
         style={{
           position: 'fixed',
           top: 0,
-          right: 0,
+          left: '260px',
           bottom: 0,
-          width: '100%',
+          width: 'calc(100% - 260px)',
           maxWidth: '480px',
           background: '#070b19',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.8)',
-          animation: 'slideInRight 0.3s ease-out'
+          boxShadow: '10px 0 40px rgba(0, 0, 0, 0.8)',
+          animation: 'slideInLeft 0.3s ease-out'
         }}
       >
         {/* HEADER SECTION */}

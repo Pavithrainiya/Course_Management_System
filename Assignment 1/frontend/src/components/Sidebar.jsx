@@ -40,6 +40,7 @@ export const Sidebar = () => {
     { path: '/student', label: 'Enrollments & Bookings', icon: FileCheck },
     { path: '/calendar', label: 'Learning Calendar', icon: Calendar },
     { path: '/certificates', label: 'Certificates & QR', icon: Award },
+    { isProfile: true, label: 'My Profile & Security', icon: User },
     { path: '/admin', tab: 'users', label: 'Users', icon: Users, roleReq: 'ADMIN' },
     { path: '/admin', tab: 'analytics', label: 'Analytics', icon: BarChart3, roleReq: 'ADMIN' },
   ];
@@ -98,7 +99,50 @@ export const Sidebar = () => {
         <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {filteredItems.map((item, idx) => {
             const Icon = item.icon;
-            const active = isActive(item);
+            const active = item.isProfile ? showProfileDrawer : isActive(item);
+
+            if (item.isProfile) {
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setShowProfileDrawer(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: showProfileDrawer ? 700 : 600,
+                    color: showProfileDrawer ? '#ffffff' : '#94a3b8',
+                    background: showProfileDrawer ? '#0088cc' : 'transparent',
+                    boxShadow: showProfileDrawer ? '0 4px 18px rgba(0, 136, 204, 0.45)' : 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    width: '100%',
+                    transition: 'all 0.25s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!showProfileDrawer) {
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!showProfileDrawer) {
+                      e.currentTarget.style.color = '#94a3b8';
+                      e.currentTarget.style.background = 'transparent';
+                    }
+                  }}
+                >
+                  <Icon size={20} color={showProfileDrawer ? '#ffffff' : '#94a3b8'} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            }
+
             const targetUrl = item.tab ? `${item.path}?tab=${item.tab}` : item.path;
 
             return (
