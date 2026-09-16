@@ -113,12 +113,17 @@ export const CourseCatalogPage = () => {
     } catch (err) {
       console.error('Enrollment error:', err);
       if (err.response?.status === 401) {
-        setMsg({ text: 'Your login session has expired. Please log in again to register.', type: 'danger' });
+        localStorage.removeItem('cms_access_token');
+        localStorage.removeItem('cms_refresh_token');
+        localStorage.removeItem('cms_user');
+        navigate('/login');
+        return;
       } else {
         const errMsg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to enroll in course. Please try again.';
         setMsg({ text: errMsg, type: 'danger' });
       }
     } finally {
+
       setActionLoading(false);
     }
   };
