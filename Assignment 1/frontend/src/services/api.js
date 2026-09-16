@@ -20,6 +20,30 @@ client.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('cms_refresh_token');
+      if (refreshToken) {
+        try {
+          const res = await axios.post(`${API_BASE_URL}auth/token/refresh/`, { refresh: refreshToken });
+          if (res.data?.access) {
+            localStorage.setItem('cms_access_token', res.data.access);
+            originalRequest.headers.Authorization = `Bearer ${res.data.access}`;
+            return client(originalRequest);
+          }
+        } catch (refreshErr) {
+          console.warn('Session refresh notice:', refreshErr);
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const api = {
   // Auth APIs
   login: async (username, password) => {

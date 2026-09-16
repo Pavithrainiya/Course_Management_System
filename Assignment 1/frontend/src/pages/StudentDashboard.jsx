@@ -39,7 +39,7 @@ export const StudentDashboard = () => {
           { id: 1, CourseId: 101, CourseName: 'Python Full-Stack Mastery', Description: 'Comprehensive Python development.', category: 'Computer Science' },
           { id: 2, CourseId: 102, CourseName: 'Database Systems & PostgreSQL', Description: 'Master relational database architecture.', category: 'Data Engineering' },
           { id: 3, CourseId: 103, CourseName: 'Web Development & React.js', Description: 'Modern frontend development.', category: 'Software Engineering' },
-          { id: 4, CourseId: 104, CourseName: 'Artificial Intelligence & Machine Learning', Description: 'Neural networks & deep learning.', category: 'Data Science' }
+          { id: 7, CourseId: 104, CourseName: 'Artificial Intelligence & Machine Learning', Description: 'Neural networks & deep learning.', category: 'Data Science' }
         ];
       }
       setCourses(safeList);

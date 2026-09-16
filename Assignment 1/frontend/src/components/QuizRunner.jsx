@@ -39,19 +39,23 @@ export const QuizRunner = ({ quiz, onComplete }) => {
       setResult(data);
       if (onComplete) onComplete(data);
 
-      setRedirecting(true);
-      setTimeout(() => {
-        navigate('/certificates', {
-          state: {
-            autoOpen: true,
-            courseId: quiz.course,
-            quizTitle: quiz.title,
-            score: data.score,
-            passed: data.passed,
-            certCode: data.cert_code
-          }
-        });
-      }, 1500);
+      if (data.passed && data.score > 0) {
+        setRedirecting(true);
+        setTimeout(() => {
+          navigate('/certificates', {
+            state: {
+              autoOpen: true,
+              courseId: quiz.course,
+              quizTitle: quiz.title,
+              score: data.score,
+              passed: data.passed,
+              certCode: data.cert_code
+            }
+          });
+        }, 1800);
+      } else {
+        setRedirecting(false);
+      }
     } catch (err) {
       alert('Failed to submit quiz.');
     } finally {
@@ -67,13 +71,13 @@ export const QuizRunner = ({ quiz, onComplete }) => {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Passing Score: {quiz.passing_score}%</p>
         </div>
         {result && (
-          <div className={`badge ${result.passed ? 'badge-student' : 'badge-admin'}`} style={{ fontSize: '1rem', padding: '8px 16px' }}>
-            Score: {result.score}% ({result.passed ? 'PASSED 🎉' : 'TRY AGAIN ❌'})
+          <div className={`badge ${result.passed && result.score > 0 ? 'badge-student' : 'badge-admin'}`} style={{ fontSize: '1rem', padding: '8px 16px' }}>
+            Score: {result.score}% ({result.passed && result.score > 0 ? 'PASSED 🎉' : 'FAILED / NO CERTIFICATE ❌'})
           </div>
         )}
       </div>
 
-      {result && redirecting && (
+      {result && result.passed && result.score > 0 && redirecting && (
         <div style={{
           padding: '16px 20px',
           borderRadius: '12px',
@@ -90,12 +94,33 @@ export const QuizRunner = ({ quiz, onComplete }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Sparkles size={20} color="#10b981" />
             <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-              Quiz Completed Successfully! Redirecting to Certificate Generated page...
+              Quiz Passed with {result.score}%! Redirecting to Verified Certificate page...
             </span>
           </div>
           <button onClick={goToCertificate} className="btn btn-aurora btn-sm">
             <Award size={14} /> Go to Certificate Page
           </button>
+        </div>
+      )}
+
+      {result && (result.score === 0 || !result.passed) && (
+        <div style={{
+          padding: '16px 20px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          background: 'rgba(244, 63, 94, 0.15)',
+          border: '1px solid #f43f5e',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <XCircle size={22} color="#f43f5e" />
+          <span style={{ fontWeight: 700, fontSize: '0.925rem' }}>
+            {result.score === 0 
+              ? 'Assessment Score is 0%. Certificate generation is blocked for 0% scores. Please review the course materials and retake the assessment.'
+              : `Score is ${result.score}% (Passing required: ${quiz.passing_score}%). Please retake the assessment to earn a passing score and generate your certificate.`}
+          </span>
         </div>
       )}
 
@@ -167,13 +192,15 @@ export const QuizRunner = ({ quiz, onComplete }) => {
             >
               <RotateCcw size={16} /> Retake Assessment
             </button>
-            <button
-              onClick={goToCertificate}
-              className="btn btn-aurora"
-              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#fff', fontWeight: 700 }}
-            >
-              <Award size={16} /> View Generated Certificate Page <ArrowRight size={16} />
-            </button>
+            {result.passed && result.score > 0 && (
+              <button
+                onClick={goToCertificate}
+                className="btn btn-aurora"
+                style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: '#fff', fontWeight: 700 }}
+              >
+                <Award size={16} /> View Generated Certificate Page <ArrowRight size={16} />
+              </button>
+            )}
           </>
         )}
       </div>

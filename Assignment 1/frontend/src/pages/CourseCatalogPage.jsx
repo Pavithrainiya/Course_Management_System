@@ -62,7 +62,7 @@ export const CourseCatalogPage = () => {
             enrolled_count: 6
           },
           {
-            id: 4,
+            id: 7,
             CourseId: 104,
             CourseName: 'Artificial Intelligence & Machine Learning',
             Description: 'Neural networks, deep learning fundamentals, supervised learning models, and automated AI evaluation engines.',
@@ -85,7 +85,7 @@ export const CourseCatalogPage = () => {
   };
 
   const isEnrolled = (courseId) => {
-    return enrollments.some(e => e.course === courseId || e.course_details?.id === courseId);
+    return enrollments.some(e => e.course === courseId || e.course_details?.id === courseId || e.course_details?.CourseId === courseId);
   };
 
   const handleEnroll = async (courseId) => {
@@ -95,29 +95,29 @@ export const CourseCatalogPage = () => {
     }
     setActionLoading(true);
     setMsg({ text: '', type: '' });
-    const courseObj = courses.find(c => c.id === courseId) || {};
+    const courseObj = courses.find(c => c.id === courseId || c.CourseId === courseId) || {};
 
     try {
-      const res = await api.enrollCourse(courseId).catch(() => ({}));
+      const res = await api.enrollCourse(courseId);
       const fullModalData = {
         id: res.id || Math.floor(1000 + Math.random() * 9000),
-        status: 'ENROLLED',
+        status: res.status || 'Active Registered',
         course_details: res.course_details || courseObj,
         student_email: res.student_email || user.email || `${user.username}@example.com`
       };
       setEnrollmentSuccessData(fullModalData);
-      setMsg({ text: `Successfully registered for ${courseObj.CourseName || 'course'}!`, type: 'success' });
-      setEnrollments(prev => {
-        if (prev.some(e => e.course === courseId || e.course_details?.id === courseId)) return prev;
-        return [...prev, { id: fullModalData.id, course: courseId, course_details: courseObj, status: 'ENROLLED' }];
-      });
+      setMsg({ text: `Successfully registered for ${courseObj.CourseName || res.course_name || 'course'}!`, type: 'success' });
+      
+      const freshList = await api.getEnrollments().catch(() => []);
+      setEnrollments(freshList);
     } catch (err) {
-      setEnrollmentSuccessData({
-        id: Math.floor(1000 + Math.random() * 9000),
-        status: 'ENROLLED',
-        course_details: courseObj,
-        student_email: user.email || `${user.username}@example.com`
-      });
+      console.error('Enrollment error:', err);
+      if (err.response?.status === 401) {
+        setMsg({ text: 'Your login session has expired. Please log in again to register.', type: 'danger' });
+      } else {
+        const errMsg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to enroll in course. Please try again.';
+        setMsg({ text: errMsg, type: 'danger' });
+      }
     } finally {
       setActionLoading(false);
     }

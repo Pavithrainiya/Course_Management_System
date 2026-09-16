@@ -73,26 +73,32 @@ class RegisterSerializer(serializers.ModelSerializer):
             from Admin_Panel.utils_email import send_automated_email
             from django.utils import timezone
             now_str = timezone.now().strftime('%Y-%m-%d %H:%M UTC')
-            reg_email_body = f"""Greetings {user.first_name or user.username},
+            reg_email_body = f"""Greetings {user.first_name or user.username or 'Talent'},
 
-Welcome to CourseHub! Your official student account has been successfully created.
+A new operational account mission has been assigned to you by the Global Administration.
 
---- ACCOUNT REGISTRATION DETAILS ---
-ADMIN SENDER : pavijeevi56@gmail.com
-USERNAME     : @{user.username}
-STUDENT NAME : {(user.first_name or user.username) + ' ' + (user.last_name or '')}
-EMAIL        : {user_email or 'Registered'}
-REGISTERED   : {now_str}
-ROLE         : Student / Learner
-------------------------------------
+--- MISSION BRIEF DETAILS ---
+ADMIN SENDER  : pavijeevi56@gmail.com
+TITLE         : Student Registration & Workspace Access
+CATEGORY      : Account Onboarding
+PRIORITY      : High
+ASSIGNED DATE : {now_str}
+DUE DATE      : {now_str}
+---------------------------------
 
 DESCRIPTION & SCOPE OF WORK:
-💻 Access 24/7 interactive AI tutor support, auto-graded topic assessments, verified certificates, and real-time learning progress tracking.
+💻 Account Username: @{user.username}
+💻 Registered Student Email: {user.email or 'Registered'}
 
-Please log in to your CourseHub portal workspace to enroll in active courses and begin your learning journey.
+Follow portal guidelines, access course curriculums, complete assessments, and submit code.
 
-Best regards,
-CourseHub Global Administration (pavijeevi56@gmail.com)
+---------------------------------
+📄 Attached: Official Mission Briefing PDF ('CMS_Onboarding_Directive.pdf')
+
+Please log in to your Course Management System (CMS) workspace to submit your work before the due date.
+
+System Admin Sender: pavijeevi56@gmail.com
+Course Management System (CMS)
 """
             send_automated_email(
                 subject="🎉 CourseHub Account Registration Briefing",

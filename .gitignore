@@ -9,10 +9,14 @@ __pycache__/
 *.sqlite3
 
 # Node / React
-frontend/node_modules/
-frontend/dist/
-frontend/build/
 node_modules/
+dist/
+build/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
 
 # Local emails archive & logs
 sent_emails/
