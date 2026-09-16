@@ -46,48 +46,6 @@ export const StudentPortalPage = () => {
   return (
     <div className="container" style={{ padding: '40px 24px', flex: 1 }}>
       
-      {/* USER PROFILE SUMMARY & SECURITY HEADER BANNER */}
-      <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '32px', border: '1px solid rgba(0, 198, 255, 0.3)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              width: '54px',
-              height: '54px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0088cc 0%, #00c6ff 100%)',
-              border: '2px solid #f59e0b',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.4rem',
-              fontWeight: 800,
-              color: '#fff',
-              boxShadow: '0 0 16px rgba(0, 198, 255, 0.4)'
-            }}>
-              {user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                  Welcome back, {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username}!
-                </h2>
-                <span className="badge badge-student">{role}</span>
-              </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
-                Manage registration details, change password, or request password reset via your Profile Sidenav.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowProfileDrawer(true)}
-            className="btn btn-aurora"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 20px', fontWeight: 700 }}
-          >
-            <User size={18} /> View User Profile & Security Sidenav <Settings size={16} />
-          </button>
-        </div>
-      </div>
 
       <div className="page-header">
         <h1 className="page-title">My Course Enrollments</h1>

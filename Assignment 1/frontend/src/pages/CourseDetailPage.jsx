@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { AIChatDrawer } from '../components/AIChatDrawer';
@@ -8,11 +8,12 @@ import { CertificateModal } from '../components/CertificateModal';
 import { EnrollmentSuccessModal } from '../components/EnrollmentSuccessModal';
 import {
   BookOpen, Video, FileText, Link as LinkIcon, Plus, ArrowLeft, Users, Calendar,
-  X, ExternalLink, CheckCircle2, Circle, Bot, Award, HelpCircle, PlayCircle, Sparkles, UserPlus
+  X, ExternalLink, CheckCircle2, Circle, Bot, Award, HelpCircle, PlayCircle, Sparkles, UserPlus, Lock
 } from 'lucide-react';
 
 export const CourseDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [activeTab, setActiveTab] = useState('curriculum'); // curriculum, quizzes, resources
   const [selectedLesson, setSelectedLesson] = useState(null);
@@ -20,11 +21,13 @@ export const CourseDetailPage = () => {
   const [progressPercent, setProgressPercent] = useState(0);
 
   const [loading, setLoading] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const [showAiChat, setShowAiChat] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
   const [certificateData, setCertificateData] = useState(null);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [enrollmentSuccessData, setEnrollmentSuccessData] = useState(null);
+
 
   const [newContent, setNewContent] = useState({
     title: '',
@@ -37,7 +40,28 @@ export const CourseDetailPage = () => {
 
   useEffect(() => {
     fetchCourseDetails();
-  }, [id]);
+  }, [id, user]);
+
+  const checkEnrollmentStatus = async (courseData) => {
+    if (!user || role !== 'STUDENT') {
+      setIsEnrolled(true);
+      return;
+    }
+    try {
+      const list = await api.getEnrollments().catch(() => []);
+      const safeList = Array.isArray(list) ? list : [];
+      const targetId = courseData?.id?.toString() || id?.toString();
+      const targetCode = courseData?.CourseId?.toString();
+      const found = safeList.some(e => {
+        const eId = e.course?.toString() || e.course_details?.id?.toString();
+        const eCode = e.course_details?.CourseId?.toString();
+        return (targetId && eId === targetId) || (targetCode && (eId === targetCode || eCode === targetCode));
+      });
+      setIsEnrolled(found);
+    } catch (err) {
+      console.warn('Error checking enrollment status:', err);
+    }
+  };
 
   const fetchCourseDetails = async () => {
     try {
@@ -66,6 +90,7 @@ export const CourseDetailPage = () => {
       }
 
       setCourse(data);
+      checkEnrollmentStatus(data);
 
       let allLessons = [];
       if (data && data.modules) {
@@ -97,8 +122,10 @@ export const CourseDetailPage = () => {
         course_details: res.course_details || course,
         student_email: res.student_email || user?.email || `${user?.username || 'student'}@example.com`
       };
+      setIsEnrolled(true);
       setEnrollmentSuccessData(fullModalData);
     } catch (err) {
+      setIsEnrolled(true);
       setEnrollmentSuccessData({
         id: Math.floor(1000 + Math.random() * 9000),
         status: 'ENROLLED',
@@ -111,6 +138,12 @@ export const CourseDetailPage = () => {
   const [showAssessmentPrompt, setShowAssessmentPrompt] = useState(false);
 
   const handleToggleLesson = async (lessonId) => {
+    if (role === 'STUDENT' && !isEnrolled) {
+      if (window.confirm('Enrollment Required: Please enroll in this course first to access interactive lessons and track progress. Would you like to enroll now?')) {
+        handleEnrollInCourse();
+      }
+      return;
+    }
     try {
       const data = await api.toggleLessonProgress(lessonId);
       if (data.completed) {
@@ -179,9 +212,24 @@ export const CourseDetailPage = () => {
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={handleEnrollInCourse} className="btn btn-aurora btn-sm">
-              <UserPlus size={16} /> Enroll in Course
-            </button>
+            {isEnrolled ? (
+              <button
+                onClick={() => setEnrollmentSuccessData({
+                  id: Math.floor(1000 + Math.random() * 9000),
+                  status: 'ENROLLED',
+                  course_details: course,
+                  student_email: user?.email || `${user?.username || 'student'}@example.com`
+                })}
+                className="btn btn-secondary btn-sm"
+                style={{ borderColor: 'var(--accent-emerald)', color: 'var(--accent-emerald)' }}
+              >
+                <CheckCircle2 size={16} /> Enrolled (View Registration Info)
+              </button>
+            ) : (
+              <button onClick={handleEnrollInCourse} className="btn btn-aurora btn-sm">
+                <UserPlus size={16} /> Enroll in Course
+              </button>
+            )}
             <button onClick={handleFetchCertificate} className="btn btn-secondary btn-sm" style={{ borderColor: 'var(--accent-amber)', color: 'var(--accent-amber)' }}>
               <Award size={16} /> Certificate
             </button>
@@ -215,6 +263,37 @@ export const CourseDetailPage = () => {
           ))}
         </div>
       </div>
+
+      {/* ENROLLMENT PROMPT ALERT FOR UNENROLLED STUDENTS */}
+      {!isEnrolled && role === 'STUDENT' && (
+        <div style={{
+          padding: '18px 24px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%)',
+          border: '1.5px solid rgba(245, 158, 11, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+          marginBottom: '28px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <Lock size={24} color="#f59e0b" />
+            <div>
+              <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                🔒 Enrollment Required to Access Interactive Curriculum
+              </div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '2px' }}>
+                Please enroll in this course to track your lesson progress, receive email confirmation, and unlock certified quizzes.
+              </div>
+            </div>
+          </div>
+          <button onClick={handleEnrollInCourse} className="btn btn-aurora" style={{ fontWeight: 800, padding: '10px 22px' }}>
+            <UserPlus size={18} /> Enroll Now & Unlock Full Curriculum
+          </button>
+        </div>
+      )}
 
       {/* TAB CONTENT: Curriculum & Modules */}
       {activeTab === 'curriculum' && (
