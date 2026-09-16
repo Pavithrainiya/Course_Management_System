@@ -718,11 +718,22 @@ class CertificateAPIView(APIView):
             serializer = CertificateSerializer(cert)
             return Response(serializer.data)
 
-        # Return all issued certificates + list of completed students across all courses
-        certificates = Certificate.objects.select_related('student', 'course', 'student__user').all()
-        serializer = CertificateSerializer(certificates, many=True)
+        user = request.user
+        is_admin = hasattr(user, 'profile') and user.profile.role in ['ADMIN', 'INSTRUCTOR']
 
-        enrollments = Enrollment.objects.select_related('student', 'course', 'student__user').all()
+        if is_admin:
+            certificates = Certificate.objects.select_related('student', 'course', 'student__user').all()
+            enrollments = Enrollment.objects.select_related('student', 'course', 'student__user').all()
+        else:
+            student = Student.objects.filter(user=user).first()
+            if student:
+                certificates = Certificate.objects.filter(student=student).select_related('student', 'course', 'student__user')
+                enrollments = Enrollment.objects.filter(student=student).select_related('student', 'course', 'student__user')
+            else:
+                certificates = Certificate.objects.none()
+                enrollments = Enrollment.objects.none()
+
+        serializer = CertificateSerializer(certificates, many=True)
         completed_list = []
         for enc in enrollments:
             cert = Certificate.objects.filter(student=enc.student, course=enc.course).first()

@@ -81,7 +81,9 @@ export const CertificatesPage = () => {
 
       const certs = certsRes?.certificates || [];
       let completed = certsRes?.completed_students || [];
-      if (!completed || completed.length === 0) {
+      
+      // Only populate mock default list if admin/instructor is viewing and DB returns 0 items
+      if ((!completed || completed.length === 0) && (role === 'ADMIN' || role === 'INSTRUCTOR')) {
         completed = [
           {
             id: 1,
@@ -186,13 +188,32 @@ export const CertificatesPage = () => {
     setShowModal(true);
   };
 
+  // Strictly filter completed entries for non-admin students so only their own details are shown
   const filteredCompleted = completedStudents.filter(item => {
-    const matchesSearch = item.student_name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          item.course_name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                          item.username.toLowerCase().includes(searchFilter.toLowerCase());
+    const matchesSearch = (item.student_name || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
+                          (item.course_name || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
+                          (item.username || '').toLowerCase().includes(searchFilter.toLowerCase());
     const matchesCourse = selectedCourseId ? item.course_id.toString() === selectedCourseId.toString() : true;
-    return matchesSearch && matchesCourse;
+
+    if (role === 'ADMIN' || role === 'INSTRUCTOR') {
+      return matchesSearch && matchesCourse;
+    }
+
+    // For regular student: match logged-in user
+    const currentUsername = (user?.username || '').toLowerCase();
+    const currentEmail = (user?.email || '').toLowerCase();
+    const itemUsername = (item.username || '').toLowerCase();
+    const itemEmail = (item.student_email || item.email || '').toLowerCase();
+    const itemName = (item.student_name || '').toLowerCase();
+
+    const isMyRecord = itemUsername === currentUsername ||
+                       (currentEmail && itemEmail === currentEmail) ||
+                       (user?.first_name && itemName.includes(user.first_name.toLowerCase()));
+
+    return isMyRecord && matchesSearch && matchesCourse;
   });
+
+  const isAdmin = role === 'ADMIN' || role === 'INSTRUCTOR';
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
@@ -208,14 +229,16 @@ export const CertificatesPage = () => {
               Certificates & <span className="text-gradient">QR Code Verification</span>
             </h1>
             <p style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>
-              Issue, verify, and inspect official QR-coded completion certificates for students who completed courses.
+              {isAdmin
+                ? 'Issue, verify, and inspect official QR-coded completion certificates for students who completed courses.'
+                : 'Access, view, and print your official verified course completion certificates.'}
             </p>
           </div>
           <div>
             <ExportButtons
               title="Official Student Certificates Directory"
               headers={['Cert Code', 'Student Name', 'Completed Course', 'Status', 'Issue Date']}
-              data={completedStudents.map(s => ({
+              data={filteredCompleted.map(s => ({
                 'Cert Code': s.certificate_code || `CMS-${s.id}`,
                 'Student Name': s.student_name || s.username,
                 'Completed Course': s.course_name,
@@ -248,7 +271,7 @@ export const CertificatesPage = () => {
         <div style={{ marginBottom: '40px' }}>
           <div className="card-glass" style={{ padding: '28px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Award color="#f59e0b" size={22} /> Enter Student Name for Certificate
+              <Award color="#f59e0b" size={22} /> {isAdmin ? 'Enter Student Name for Certificate' : 'Generate My Verified Certificate'}
             </h2>
 
             <form onSubmit={handleGenerateCertificate} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -261,7 +284,7 @@ export const CertificatesPage = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Enter full student name (e.g. Pavithra, Jeevitha)"
+                  placeholder="Enter full student name"
                   value={studentNameInput}
                   onChange={(e) => setStudentNameInput(e.target.value)}
                   style={{ background: 'var(--bg-card)', color: '#fff', fontSize: '1rem', padding: '12px 16px' }}
@@ -318,10 +341,12 @@ export const CertificatesPage = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <UserCheck color="#10b981" size={22} /> Completed Students List
+                <UserCheck color="#10b981" size={22} /> {isAdmin ? 'Completed Students List' : 'My Verified Certificates'}
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
-                Students who completed course requirements. Click any student to populate their name and view certificate.
+                {isAdmin
+                  ? 'Students who completed course requirements. Click any student to populate their name and view certificate.'
+                  : 'Your official verified certificates and course completion credentials.'}
               </p>
             </div>
 
@@ -331,7 +356,7 @@ export const CertificatesPage = () => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search student or course..."
+                placeholder="Search course..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 style={{ paddingLeft: '40px', background: 'var(--bg-card)', fontSize: '0.875rem' }}
@@ -341,14 +366,18 @@ export const CertificatesPage = () => {
 
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              Loading completed students list...
+              Loading certificate details...
             </div>
           ) : filteredCompleted.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
               <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🎓</div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>No Completed Enrollments Found</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                {isAdmin ? 'No Completed Enrollments Found' : 'No Certificates Earned Yet'}
+              </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '6px' }}>
-                Enter student name above to issue a manual completion certificate.
+                {isAdmin
+                  ? 'Enter student name above to issue a manual completion certificate.'
+                  : 'Select a course above and click Generate Verified Certificate to view your completion credential.'}
               </p>
             </div>
           ) : (
