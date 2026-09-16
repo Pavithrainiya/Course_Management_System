@@ -2,6 +2,7 @@ services:
   - type: web
     name: course-management-backend
     env: python
+    plan: free
     buildCommand: pip install -r requirements.txt && python manage.py migrate
     startCommand: gunicorn Django_Project.wsgi:application
     envVars:
