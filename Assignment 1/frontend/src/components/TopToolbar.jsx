@@ -13,7 +13,7 @@ export const TopToolbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const getPageTitle = () => {
