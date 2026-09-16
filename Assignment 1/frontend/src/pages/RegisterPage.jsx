@@ -22,8 +22,11 @@ export const RegisterPage = () => {
 
   // Password Validation Rules
   const password = formData.password;
-  const hasMinLength = password.length >= 4;
-  const isPasswordValid = hasMinLength;
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  const isPasswordValid = hasMinLength && hasUppercase && hasNumber && hasSpecial;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,7 +39,7 @@ export const RegisterPage = () => {
     setError('');
 
     if (!isPasswordValid) {
-      setError('Password must be at least 4 characters long.');
+      setError('Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character.');
       return;
     }
 
@@ -163,14 +166,10 @@ export const RegisterPage = () => {
               />
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowPassword(prev => !prev);
-                }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setShowPassword(prev => !prev);
                 }}
                 style={{
                   position: 'absolute',

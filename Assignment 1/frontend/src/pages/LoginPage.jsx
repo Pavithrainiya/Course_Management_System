@@ -158,14 +158,10 @@ export const LoginPage = () => {
               />
               <button
                 type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowPassword(prev => !prev);
-                }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setShowPassword(prev => !prev);
                 }}
                 style={{
                   position: 'absolute',
