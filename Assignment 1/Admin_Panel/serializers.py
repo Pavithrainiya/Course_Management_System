@@ -49,17 +49,30 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', '')
         )
 
-        UserProfile.objects.create(user=user, role=role, phone=phone, department=department)
+        UserProfile.objects.get_or_create(user=user, defaults={'role': role, 'phone': str(phone), 'department': department})
 
         if role == 'STUDENT':
-            Student.objects.create(
-                user=user,
-                FirstName=user.first_name or user.username,
-                LastName=user.last_name or 'Student',
-                Email=user.email or f"{user.username}@example.com",
-                PhoneNumber=0,
-                Department=department or 'General'
-            )
+            phone_num = 0
+            if phone:
+                try:
+                    phone_num = int(''.join(filter(str.isdigit, str(phone))))
+                except Exception:
+                    phone_num = 0
+
+            try:
+                Student.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'FirstName': user.first_name or user.username,
+                        'LastName': user.last_name or 'Student',
+                        'Email': user.email or f"{user.username}@example.com",
+                        'PhoneNumber': phone_num,
+                        'Department': department or 'General'
+                    }
+                )
+            except Exception as e_st:
+                print("Student profile creation notice:", e_st)
+
 
         # Automatic email notification upon user registration
         user_email = user.email or (f"{user.username}@example.com" if '@' in user.username else None)
