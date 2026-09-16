@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   UserPlus, Lock, User, Mail, AlertCircle,
-  Eye, EyeOff, CheckCircle2, XCircle, Sparkles, ArrowRight
+  Eye, EyeOff, CheckCircle2, XCircle, Sparkles, ArrowRight, RefreshCw, Wifi
 } from 'lucide-react';
 
 // ── Success Popup Modal ──────────────────────────────────────────────────────
@@ -157,11 +157,30 @@ export const RegisterPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError]   = useState('');
+  const [isNetworkError, setIsNetworkError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryIn, setRetryIn] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
   const [registeredUser, setRegisteredUser] = useState(null);
+  const retryTimerRef = useRef(null);
+  const lastFormData = useRef(null);
 
   const { register, login, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Countdown timer for retry
+  useEffect(() => {
+    if (retryIn <= 0) return;
+    const t = setInterval(() => setRetryIn(p => p - 1), 1000);
+    return () => clearInterval(t);
+  }, [retryIn]);
+
+  // Auto-retry when countdown hits 0 (if network error)
+  useEffect(() => {
+    if (isNetworkError && retryIn === 0 && lastFormData.current) {
+      doRegister(lastFormData.current);
+    }
+  }, [retryIn, isNetworkError]);
 
   // Password rules
   const pwd = formData.password;
@@ -174,33 +193,53 @@ export const RegisterPage = () => {
   const handleChange = e =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const doRegister = async (data) => {
     setError('');
-
-    if (!isPasswordValid) {
-      setError('Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character.');
-      return;
-    }
-
+    setIsNetworkError(false);
     try {
-      await register(formData);
-      // ✅ Show success popup
-      setRegisteredUser({ username: formData.username, role: formData.role });
+      await register(data);
+      setIsNetworkError(false);
+      setRetryCount(0);
+      lastFormData.current = null;
+      setRegisteredUser({ username: data.username, role: data.role });
       setShowPopup(true);
     } catch (err) {
       console.error('Registration error:', err);
-      const data = err.response?.data;
+      // Network Error = Render backend sleeping
+      if (!err.response) {
+        setIsNetworkError(true);
+        setRetryCount(p => p + 1);
+        lastFormData.current = data;
+        setRetryIn(8); // retry in 8 seconds
+        return;
+      }
+      const respData = err.response?.data;
       let msg = 'Registration failed. Please check your inputs.';
-      if (typeof data === 'object' && data !== null) {
-        const firstKey = Object.keys(data)[0];
-        const val = data[firstKey];
+      if (typeof respData === 'object' && respData !== null) {
+        const firstKey = Object.keys(respData)[0];
+        const val = respData[firstKey];
         msg = Array.isArray(val) ? `${firstKey}: ${val[0]}` : (val || msg);
       } else if (err.message) {
         msg = err.message;
       }
       setError(msg);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsNetworkError(false);
+    setError('');
+    if (!isPasswordValid) {
+      setError('Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character.');
+      return;
+    }
+    await doRegister(formData);
+  };
+
+  const handleManualRetry = () => {
+    setRetryIn(0);
+    if (lastFormData.current) doRegister(lastFormData.current);
   };
 
   const handleContinue = async () => {
@@ -248,8 +287,45 @@ export const RegisterPage = () => {
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
+          {/* Network Error Banner */}
+          {isNetworkError && (
+            <div style={{
+              padding: '14px 16px',
+              background: 'rgba(245,158,11,0.12)',
+              border: '1px solid rgba(245,158,11,0.35)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '20px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700, marginBottom: '6px' }}>
+                <Wifi size={18} /> Server is waking up...
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0 0 10px' }}>
+                The backend server is starting up (this takes ~30 sec on free hosting).
+                {retryCount > 0 && ` Attempt ${retryCount}...`}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #f59e0b, #10b981)',
+                    borderRadius: '2px',
+                    width: `${((8 - retryIn) / 8) * 100}%`,
+                    transition: 'width 1s linear'
+                  }} />
+                </div>
+                <span style={{ color: '#f59e0b', fontSize: '0.8rem', fontWeight: 700, minWidth: '60px' }}>
+                  {retryIn > 0 ? `Retry in ${retryIn}s` : 'Retrying...'}
+                </span>
+                <button onClick={handleManualRetry}
+                  style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', color: '#f59e0b', padding: '4px 10px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <RefreshCw size={12} /> Retry Now
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Regular Error */}
+          {error && !isNetworkError && (
             <div style={{
               padding: '12px 16px',
               background: 'rgba(244,63,94,0.15)',
