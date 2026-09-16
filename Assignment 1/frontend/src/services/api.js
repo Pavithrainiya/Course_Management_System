@@ -1,6 +1,14 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api/';
+const RENDER_BACKEND_URL = 'https://course-management-system-hfat.onrender.com/api/';
+const LOCAL_BACKEND_URL = 'http://localhost:8000/api/';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? LOCAL_BACKEND_URL
+    : RENDER_BACKEND_URL
+);
+
 
 const client = axios.create({
   baseURL: API_BASE_URL,
