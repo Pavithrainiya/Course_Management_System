@@ -1,4 +1,6 @@
 import uuid
+from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.core.mail import send_mail
 from Admin_Panel.utils_email import send_automated_email
@@ -379,19 +381,36 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'profile') and user.profile.role == 'ADMIN':
+        if not user or not user.is_authenticated:
+            return Enrollment.objects.none()
+
+        if hasattr(user, 'profile') and user.profile.role in ['ADMIN', 'INSTRUCTOR']:
             return Enrollment.objects.all().order_by('-id')
-        student = Student.objects.filter(user=user).first()
-        if student:
-            return Enrollment.objects.filter(student=student).order_by('-id')
-        return Enrollment.objects.all().order_by('-id')
+
+        student_qs = Student.objects.filter(
+            models.Q(user=user) |
+            models.Q(user__username__iexact=user.username) |
+            models.Q(Email__iexact=user.email)
+        )
+        student_ids = list(student_qs.values_list('id', flat=True))
+
+        return Enrollment.objects.filter(
+            models.Q(student__in=student_ids) |
+            models.Q(student__user=user) |
+            models.Q(student__Email__iexact=user.email)
+        ).select_related('student', 'course', 'student__user').distinct().order_by('-id')
 
     def create(self, request, *args, **kwargs):
         course_id = request.data.get('course')
         student_id = request.data.get('student')
 
         if not student_id and request.user.is_authenticated:
-            student = Student.objects.filter(user=request.user).first()
+            student = Student.objects.filter(
+                models.Q(user=request.user) |
+                models.Q(user__username__iexact=request.user.username) |
+                models.Q(Email__iexact=request.user.email)
+            ).first()
+
             if not student:
                 student = Student.objects.create(
                     user=request.user,
@@ -873,30 +892,122 @@ class AIAssistantAPIView(APIView):
 
     def post(self, request):
         query = request.data.get('query', '').strip()
-        course_name = request.data.get('course_name', 'General Learning')
+        course_name = request.data.get('course_name', 'General Learning').strip()
         intent = request.data.get('intent', 'explain')  # explain, summarize, quiz, advice
 
         if not query:
             return Response({'error': 'Query prompt is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            response_text = ""
             q_lower = query.lower()
+            response_text = ""
 
-            # Handle queries asking for available courses
-            if any(k in q_lower for k in ['available course', 'available courses', 'show courses', 'list courses', 'what courses', 'all courses']):
+            # 1. ENROLLMENT & SYSTEM PLATFORM QUESTIONS
+            enrollment_keywords = ['enroll', 'enrolment', 'registration', 'register', 'how to enroll', 'how do i enroll', 'booking', 'bookings', 'unenroll', 'password', 'forgot password', 'certificate', 'login', 'sign in', 'account']
+            if any(k in q_lower for k in enrollment_keywords):
+                response_text = (
+                    f"📌 **How to Enroll & Manage Courses in CourseHub**:\n\n"
+                    f"1. **Explore Courses**: Go to **Courses / Resources** on the left side menu.\n"
+                    f"2. **Select & Enroll**: Find your target course (e.g. *{course_name}*) and click **Enroll Now** or **Enroll in Course**.\n"
+                    f"3. **Email Notification**: An official confirmation email with course details, syllabus PDF, and video links will be sent to your registered email.\n"
+                    f"4. **Access Your Enrollments**: Click **Enrollments & Bookings** on the left menu to view all your registered academic courses.\n"
+                    f"5. **Earn Certificates**: Complete all course lessons or pass the interactive quiz to unlock your official verified QR certificate under **Certificates & QR**!"
+                )
+
+            # 2. AVAILABLE COURSES LIST
+            elif any(k in q_lower for k in ['available course', 'available courses', 'show courses', 'list courses', 'what courses', 'all courses']):
                 db_courses = Course.objects.all()
-                course_lines = [f"- **Code {c.CourseId}**: **{c.CourseName}** ({c.category})" for c in db_courses]
-                response_text = f"🤖 **Available Courses in CourseHub ({db_courses.count()} Total)**:\n\n" + "\n".join(course_lines) + "\n\nFeel free to ask me any question about any of these courses!"
+                course_lines = [f"- **Code {c.CourseId}**: **{c.CourseName}** ({c.category or 'General'}) - {c.Description}" for c in db_courses]
+                response_text = f"🤖 **Available Courses in CourseHub ({db_courses.count()} Active Programs)**:\n\n" + "\n\n".join(course_lines) + "\n\nFeel free to ask me specific technical questions or syllabus details about any of these courses!"
 
+            # 3. DATABASE & POSTGRESQL QUESTIONS
+            elif any(k in q_lower for k in ['postgres', 'postgresql', 'sql', 'database', 'table', 'query', 'join', 'index', 'b-tree', 'b tree', 'schema', 'foreign key', 'primary key', 'acid', 'transaction', 'relation']):
+                response_text = (
+                    f"🤖 **Database Systems & PostgreSQL AI Answer**:\n\n"
+                    f"Regarding your query: *'{query}'*\n\n"
+                    f"**Key Database Engineering Concepts**:\n"
+                    f"- **Relational Architecture**: PostgreSQL stores structured records in tables defined by schemas, primary keys, and foreign key constraints.\n"
+                    f"- **SQL Queries & Joins**: `SELECT`, `INNER JOIN`, `LEFT JOIN`, and `GROUP BY` optimize data retrieval across relational tables.\n"
+                    f"- **Indexing & Performance**: B-Tree and Hash indexes speed up lookup queries from `O(N)` linear search to `O(log N)` complexity.\n"
+                    f"- **ACID Transactions**: Atomicity, Consistency, Isolation, and Durability ensure data integrity during concurrent user writes.\n\n"
+                    f"💡 *Pro Tip*: Use `EXPLAIN ANALYZE` in PostgreSQL to inspect query execution plans and optimize indexes!"
+                )
+
+            # 4. PYTHON & DJANGO REST QUESTIONS
+            elif any(k in q_lower for k in ['python', 'django', 'rest', 'serializer', 'orm', 'migration', 'pip', 'virtualenv', 'viewset', 'models.py', 'urls.py']):
+                response_text = (
+                    f"🤖 **Python & Django REST Framework AI Answer**:\n\n"
+                    f"Regarding your query: *'{query}'*\n\n"
+                    f"**Key Python & Backend Architecture Concepts**:\n"
+                    f"- **Django REST Framework (DRF)**: Uses `APIView` and `ModelViewSet` to expose clean RESTful endpoints (`GET`, `POST`, `PUT`, `DELETE`).\n"
+                    f"- **Serializers**: Convert Django ORM model instances into JSON payloads for React rendering and validate incoming data.\n"
+                    f"- **Object-Relational Mapping (ORM)**: Query databases using Python syntax without writing raw SQL queries.\n"
+                    f"- **Migrations**: `makemigrations` and `migrate` keep Python models in exact sync with PostgreSQL database tables."
+                )
+
+            # 5. REACT & FRONTEND QUESTIONS
+            elif any(k in q_lower for k in ['react', 'jsx', 'usestate', 'useeffect', 'component', 'props', 'vite', 'frontend', 'javascript', 'js', 'axios', 'state']):
+                response_text = (
+                    f"🤖 **React.js & Frontend Engineering AI Answer**:\n\n"
+                    f"Regarding your query: *'{query}'*\n\n"
+                    f"**Key Modern Frontend Architecture Concepts**:\n"
+                    f"- **Component State (`useState`)**: Dynamic reactive data triggering UI re-renders whenever mutated.\n"
+                    f"- **Side Effects (`useEffect`)**: Handles data fetching from DRF REST APIs, subscriptions, and DOM updates.\n"
+                    f"- **Context API (`useAuth`)**: Shares global user authentication tokens and active roles across all application routes.\n"
+                    f"- **Axios Client**: Dispatches asynchronous REST API requests with JWT Bearer tokens attached in headers."
+                )
+
+            # 6. AI & MACHINE LEARNING QUESTIONS
+            elif any(k in q_lower for k in ['ai', 'machine learning', 'ml', 'deep learning', 'neural network', 'backprop', 'transformer', 'rag', 'llm', 'model', 'supervised']):
+                response_text = (
+                    f"🤖 **AI & Machine Learning Architecture Answer**:\n\n"
+                    f"Regarding your query: *'{query}'*\n\n"
+                    f"**Key AI & RAG Concepts**:\n"
+                    f"- **Neural Networks**: Layers of artificial neurons processing numeric inputs through weights, biases, and activation functions (ReLU, Sigmoid).\n"
+                    f"- **Backpropagation**: Calculates gradient loss with respect to network weights to minimize error during training epochs.\n"
+                    f"- **Retrieval-Augmented Generation (RAG)**: Retrieves domain-specific knowledge chunks from database vector stores to provide accurate contextual answers.\n"
+                    f"- **Model Evaluation**: Metrics like Precision, Recall, F1-Score, and Accuracy measure model generalization."
+                )
+
+            # 7. SUMMARY INTENT
             elif intent == 'summarize' or 'summary' in q_lower or 'summarize' in q_lower:
-                response_text = f"🤖 **AI Course Summary ({course_name})**:\n\n1. **Core Concepts**: Key principles, architectural frameworks, and best practices in {course_name}.\n2. **Practical Applications**: Hands-on exercises, industry-standard workflows, and real-world implementation.\n3. **Key Takeaways**: Master foundational skills, optimize performance, and apply problem-solving techniques effectively."
+                matched_course = Course.objects.filter(CourseName__icontains=course_name).first()
+                desc = matched_course.Description if matched_course else f"Comprehensive mastery of core and advanced concepts in {course_name}."
+                response_text = (
+                    f"🤖 **AI Course Summary for {course_name}**:\n\n"
+                    f"**Overview**: {desc}\n\n"
+                    f"**Core Learning Modules**:\n"
+                    f"1. **Fundamentals & Theoretical Architecture**: Core syntax, foundational principles, and system design.\n"
+                    f"2. **Hands-on Implementation**: Real-world projects, database schemas, and RESTful API integration.\n"
+                    f"3. **Testing, Optimization & Deployment**: Automated assessments, performance tuning, and official QR certification."
+                )
 
+            # 8. QUIZ INTENT
             elif intent == 'quiz' or 'quiz' in q_lower or 'question' in q_lower:
-                response_text = f"🤖 **AI Practice Question for {course_name}**:\n\n**Q**: What is a primary benefit of using modular architecture in {course_name}?\n- **A)** Enhanced maintainability & scalability ✅\n- **B)** Slower execution times\n- **C)** Increased code duplication\n- **D)** None of the above\n\n*Explanation*: Modular design isolates components, enabling easier maintenance, automated testing, and seamless team collaboration."
+                response_text = (
+                    f"🤖 **AI Practice Quiz Question for {course_name}**:\n\n"
+                    f"**Question**: Which technique best improves query execution performance in {course_name}?\n"
+                    f"- **A)** Adding database indexes on frequently queried columns ✅\n"
+                    f"- **B)** Disabling caching\n"
+                    f"- **C)** Increasing network latency\n"
+                    f"- **D)** Storing unindexed plain text\n\n"
+                    f"*Explanation*: Database indexes (e.g. B-Tree) reduce lookup time from linear scan `O(N)` to logarithmic search `O(log N)`."
+                )
 
+            # 9. GENERAL CONTEXTUAL ANSWER
             else:
-                response_text = f"🤖 **AI Learning Assistant ({course_name})**:\n\nRegarding your question: *'{query}'*\n\nIn **{course_name}**, this concept refers to structured problem-solving and foundational execution patterns. When implementing this, focus on:\n- **Clarity & Structure**: Break complex problems into modular steps.\n- **Best Practices**: Use standard design conventions and optimized database queries.\n- **Verification**: Always validate output with unit tests and real-world data.\n\nWould you like me to generate a practice quiz question or provide a detailed code snippet on this topic?"
+                matched_course = Course.objects.filter(models.Q(CourseName__icontains=course_name) | models.Q(category__icontains=course_name)).first()
+                course_ctx = f" (Course: {matched_course.CourseName})" if matched_course else f" ({course_name})"
+                response_text = (
+                    f"🤖 **AI Learning Assistant{course_ctx}**:\n\n"
+                    f"Regarding your query: *'{query}'*\n\n"
+                    f"Here is a detailed explanation:\n"
+                    f"- **Core Concept**: `{query}` involves understanding the underlying architectural principles, data flow, and implementation rules within **{course_name}**.\n"
+                    f"- **Key Step 1**: Identify the primary components and configuration settings required.\n"
+                    f"- **Key Step 2**: Implement clean, modular code following industry best practices and security guidelines.\n"
+                    f"- **Key Step 3**: Test your implementation, verify error bounds, and execute performance optimization.\n\n"
+                    f"Feel free to ask me to generate a practice quiz question, explain specific code snippets, or guide you through course enrollment!"
+                )
 
             return Response({
                 'query': query,
