@@ -7,7 +7,7 @@ services:
     startCommand: gunicorn Django_Project.wsgi:application
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: 3.11.9
       - key: EMAIL_BACKEND
         value: django.core.mail.backends.smtp.EmailBackend
       - key: EMAIL_HOST
