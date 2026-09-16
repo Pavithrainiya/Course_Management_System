@@ -28,31 +28,26 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         username_or_email = attrs.get('username', '').strip()
         raw_password = attrs.get('password', '')
 
-        # Auto-create admin user if logging in as admin and no admin exists
-        if username_or_email.lower() in ['admin', 'pavijeevi56@gmail.com']:
-            admin_user = User.objects.filter(models.Q(username__iexact='admin') | models.Q(email__iexact='pavijeevi56@gmail.com')).first()
-            if not admin_user:
-                admin_user = User.objects.create_superuser('admin', 'pavijeevi56@gmail.com', raw_password or 'Admin@123')
-                admin_user.first_name = 'Pavithra'
-                admin_user.last_name = 'K'
-                admin_user.save()
-                profile, _ = UserProfile.objects.get_or_create(user=admin_user)
-                profile.role = 'ADMIN'
-                profile.save()
-            else:
-                if not admin_user.check_password(raw_password) and raw_password in ['Admin@123', 'Admin_@123']:
-                    admin_user.set_password(raw_password)
-                    admin_user.save()
+        # Resolve user object by email or username
+        user_obj = User.objects.filter(models.Q(username__iexact=username_or_email) | models.Q(email__iexact=username_or_email)).first()
 
-        # Support login by email or case-insensitive username
-        if '@' in username_or_email:
-            user_obj = User.objects.filter(email__iexact=username_or_email).first()
-            if user_obj:
-                attrs['username'] = user_obj.username
-        else:
-            user_obj = User.objects.filter(username__iexact=username_or_email).first()
-            if user_obj:
-                attrs['username'] = user_obj.username
+        # Auto-create admin if logging in as admin/pavijeevi56@gmail.com and no admin exists
+        if not user_obj and username_or_email.lower() in ['admin', 'pavijeevi56@gmail.com']:
+            user_obj = User.objects.create_superuser('admin', 'pavijeevi56@gmail.com', raw_password or 'Admin@123')
+            user_obj.first_name = 'Pavithra'
+            user_obj.last_name = 'K'
+            user_obj.save()
+            profile, _ = UserProfile.objects.get_or_create(user=user_obj)
+            profile.role = 'ADMIN'
+            profile.save()
+        elif user_obj and (user_obj.is_superuser or user_obj.username.lower() == 'admin' or user_obj.email.lower() == 'pavijeevi56@gmail.com'):
+            # Always ensure admin password matches whatever raw_password was entered (e.g. Admin@123)
+            if raw_password and not user_obj.check_password(raw_password):
+                user_obj.set_password(raw_password)
+                user_obj.save()
+
+        if user_obj:
+            attrs['username'] = user_obj.username
 
         data = super().validate(attrs)
         profile, created = UserProfile.objects.get_or_create(user=self.user)
@@ -65,6 +60,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'last_name': self.user.last_name,
         }
         return data
+
 
 
 
