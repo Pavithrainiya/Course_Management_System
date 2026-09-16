@@ -6,8 +6,10 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('cms_user');
-    return saved ? JSON.parse(saved) : null;
+    const token = localStorage.getItem('cms_access_token');
+    return (saved && token) ? JSON.parse(saved) : null;
   });
+
   const [loading, setLoading] = useState(false);
 
   const login = async (username, password) => {
