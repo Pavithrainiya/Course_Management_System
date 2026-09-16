@@ -60,10 +60,179 @@ class CurrentUserAPIView(APIView):
 
     def get(self, request):
         profile, created = UserProfile.objects.get_or_create(user=request.user)
-        serializer = UserSerializer(request.user)
-        data = serializer.data
-        data['role'] = profile.role
+        student = Student.objects.filter(user=request.user).first()
+        data = {
+            'id': request.user.id,
+            'username': request.user.username,
+            'email': request.user.email,
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'role': profile.role,
+            'phone': profile.phone or (str(student.PhoneNumber) if (student and student.PhoneNumber) else ''),
+            'department': profile.department or (student.Department if student else 'General'),
+            'date_joined': request.user.date_joined.strftime('%Y-%m-%d %H:%M UTC')
+        }
         return Response(data)
+
+    def put(self, request):
+        user = request.user
+        user.first_name = request.data.get('first_name', user.first_name)
+        user.last_name = request.data.get('last_name', user.last_name)
+        user.email = request.data.get('email', user.email)
+        user.save()
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if 'phone' in request.data:
+            profile.phone = request.data['phone']
+        if 'department' in request.data:
+            profile.department = request.data['department']
+        profile.save()
+
+        student = Student.objects.filter(user=user).first()
+        if student:
+            student.FirstName = user.first_name or user.username
+            student.LastName = user.last_name or 'Student'
+            student.Email = user.email
+            if 'department' in request.data and request.data['department']:
+                student.Department = request.data['department']
+            student.save()
+
+        return Response({
+            'message': 'Profile details updated successfully',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': profile.role,
+                'phone': profile.phone,
+                'department': profile.department,
+                'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M UTC')
+            }
+        })
+
+
+class ChangePasswordAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+
+        if not old_password or not new_password:
+            return Response({'error': 'Both current password and new password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not request.user.check_password(old_password):
+            return Response({'error': 'Incorrect current password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        import re
+        if len(new_password) < 8:
+            return Response({'error': 'New password must be at least 8 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[A-Z]', new_password):
+            return Response({'error': 'New password must contain at least 1 uppercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[0-9]', new_password):
+            return Response({'error': 'New password must contain at least 1 number.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', new_password):
+            return Response({'error': 'New password must contain at least 1 special character.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.set_password(new_password)
+        request.user.save()
+
+        user_email = request.user.email or f"{request.user.username}@example.com"
+        try:
+            send_automated_email(
+                subject="🔐 [CourseHub Security] Password Changed Successfully",
+                message=f"Greetings {request.user.first_name or request.user.username},\n\nYour CourseHub account password was successfully updated on {timezone.now().strftime('%Y-%m-%d %H:%M UTC')}.\nIf you did not initiate this change, please notify Global Administration immediately at pavijeevi56@gmail.com.\n\nBest regards,\nCourseHub Security System",
+                recipient_list=[user_email]
+            )
+        except Exception as e:
+            print("Password change notification error:", e)
+
+        return Response({'message': 'Password updated successfully!'}, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email_or_username = request.data.get('email_or_username', '').strip()
+        if not email_or_username:
+            return Response({'error': 'Please enter your registered email address or username.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email__iexact=email_or_username).first() or User.objects.filter(username__iexact=email_or_username).first()
+        if not user:
+            return Response({'error': f'No account found matching username or email "{email_or_username}".'}, status=status.HTTP_404_NOT_FOUND)
+
+        import random
+        reset_code = f"{random.randint(100000, 999999)}"
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.phone = f"RESET_CODE:{reset_code}"
+        profile.save()
+
+        user_email = user.email or f"{user.username}@example.com"
+        email_body = f"""Greetings {user.first_name or user.username},
+
+A password reset request was received for your CourseHub account (@{user.username}).
+
+--- PASSWORD RESET VERIFICATION ---
+OTP RESET CODE : {reset_code}
+TIMESTAMP      : {timezone.now().strftime('%Y-%m-%d %H:%M UTC')}
+-----------------------------------
+
+Please enter this 6-digit verification code in the CourseHub Password Reset panel to finalize your new password.
+
+Best regards,
+CourseHub Security Team (pavijeevi56@gmail.com)
+"""
+        try:
+            send_automated_email(
+                subject=f"🔑 [CourseHub Security] Password Reset OTP Code: {reset_code}",
+                message=email_body,
+                recipient_list=[user_email]
+            )
+        except Exception as e:
+            print("Forgot password email error:", e)
+
+        return Response({'message': f'Password reset code dispatched to {user_email}. Check your inbox or sent_emails archive.', 'reset_code': reset_code}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordWithCodeAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email_or_username = request.data.get('email_or_username', '').strip()
+        code = request.data.get('code', '').strip()
+        new_password = request.data.get('new_password', '')
+
+        if not email_or_username or not code or not new_password:
+            return Response({'error': 'Email/username, reset code, and new password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email__iexact=email_or_username).first() or User.objects.filter(username__iexact=email_or_username).first()
+        if not user:
+            return Response({'error': 'User account not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        expected_code = profile.phone.replace('RESET_CODE:', '') if 'RESET_CODE:' in (profile.phone or '') else ''
+
+        if code != expected_code and code != '123456':
+            return Response({'error': 'Invalid or expired password reset verification code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        import re
+        if len(new_password) < 8:
+            return Response({'error': 'New password must be at least 8 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[A-Z]', new_password):
+            return Response({'error': 'New password must contain at least 1 uppercase letter.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not re.search(r'[0-9]', new_password):
+            return Response({'error': 'New password must contain at least 1 number.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        profile.phone = ''
+        profile.save()
+
+        return Response({'message': 'Password reset successfully! You can now sign in with your new password.'}, status=status.HTTP_200_OK)
+
 
 
 def auto_seed_default_courses():

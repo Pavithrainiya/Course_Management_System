@@ -42,6 +42,29 @@ export const api = {
     return response.data;
   },
 
+  updateProfile: async (profileData) => {
+    const response = await client.put('auth/me/', profileData);
+    if (response.data?.user) {
+      localStorage.setItem('cms_user', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  },
+
+  changePassword: async (passwordData) => {
+    const response = await client.post('auth/change-password/', passwordData);
+    return response.data;
+  },
+
+  forgotPassword: async (data) => {
+    const response = await client.post('auth/forgot-password/', data);
+    return response.data;
+  },
+
+  resetPasswordWithCode: async (data) => {
+    const response = await client.post('auth/reset-password/', data);
+    return response.data;
+  },
+
   logout: () => {
     localStorage.removeItem('cms_access_token');
     localStorage.removeItem('cms_refresh_token');

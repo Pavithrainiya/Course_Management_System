@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UserProfileDrawer } from './UserProfileDrawer';
 import {
-  LayoutGrid, BookOpen, FileCheck, Calendar, Award, Users, BarChart3, LogOut, Activity, Crown
+  LayoutGrid, BookOpen, FileCheck, Calendar, Award, Users, BarChart3, LogOut, Activity, Crown, User, Settings
 } from 'lucide-react';
 
 export const Sidebar = () => {
   const { user, role, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -130,21 +132,37 @@ export const Sidebar = () => {
       <div style={{ padding: '24px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(0, 0, 0, 0.2)' }}>
         {user ? (
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
+            <div
+              onClick={() => setShowProfileDrawer(true)}
+              title="Click to open User Profile Details & Password Sidenav"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                marginBottom: '16px',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-cyan)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'}
+            >
               <div style={{ position: 'relative' }}>
                 <div style={{
-                  width: '44px',
-                  height: '44px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #0088cc 0%, #00c6ff 100%)',
                   border: '2px solid #f59e0b',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.1rem',
+                  fontSize: '1rem',
                   fontWeight: 800,
-                  color: '#fff',
-                  boxShadow: '0 0 12px rgba(245, 158, 11, 0.4)'
+                  color: '#fff'
                 }}>
                   {getInitial()}
                 </div>
@@ -156,24 +174,18 @@ export const Sidebar = () => {
                   borderRadius: '50%',
                   padding: '2px'
                 }}>
-                  <Crown size={14} color="#f59e0b" fill="#f59e0b" />
+                  <Crown size={12} color="#f59e0b" fill="#f59e0b" />
                 </div>
               </div>
 
-              <div>
-                <span style={{
-                  display: 'inline-block',
-                  padding: '4px 12px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 136, 204, 0.15)',
-                  border: '1px solid rgba(0, 136, 204, 0.4)',
-                  color: '#38bdf8',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.5px'
-                }}>
-                  {role || 'ADMIN'}
-                </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.username}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  <span className="badge badge-student" style={{ padding: '1px 6px', fontSize: '0.625rem' }}>{role}</span>
+                  <Settings size={12} color="var(--text-muted)" />
+                </div>
               </div>
             </div>
 
@@ -185,11 +197,11 @@ export const Sidebar = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '10px',
-                padding: '10px 16px',
+                padding: '8px 16px',
                 background: 'none',
                 border: 'none',
                 color: '#94a3b8',
-                fontSize: '0.95rem',
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
@@ -197,7 +209,7 @@ export const Sidebar = () => {
               onMouseEnter={(e) => e.currentTarget.style.color = '#f43f5e'}
               onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
             >
-              <LogOut size={18} /> Sign Out
+              <LogOut size={16} /> Sign Out
             </button>
           </div>
         ) : (
@@ -208,6 +220,8 @@ export const Sidebar = () => {
           </div>
         )}
       </div>
+
+      <UserProfileDrawer isOpen={showProfileDrawer} onClose={() => setShowProfileDrawer(false)} />
     </aside>
   );
 };

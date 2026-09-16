@@ -17,6 +17,9 @@ urlpatterns = [
     path('api/auth/register/', views_api.RegisterAPIView.as_view(), name='api_register'),
     path('api/auth/login/', views_api.CustomTokenObtainPairView.as_view(), name='api_login'),
     path('api/auth/me/', views_api.CurrentUserAPIView.as_view(), name='api_me'),
+    path('api/auth/change-password/', views_api.ChangePasswordAPIView.as_view(), name='api_change_password'),
+    path('api/auth/forgot-password/', views_api.ForgotPasswordAPIView.as_view(), name='api_forgot_password'),
+    path('api/auth/reset-password/', views_api.ResetPasswordWithCodeAPIView.as_view(), name='api_reset_password'),
     path('api/dashboard/stats/', views_api.DashboardStatsAPIView.as_view(), name='api_stats'),
     
     # AI & Interactive Learning API Endpoints
