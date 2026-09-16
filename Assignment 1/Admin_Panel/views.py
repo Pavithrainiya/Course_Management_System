@@ -8,14 +8,28 @@ from .forms import CreateUserForm,StudentForm
 
 
 
-# Register View (Create user)
+# Register View (Create user and student profile automatically)
 def register(request):
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
-            form.save()
-            User.is_staff=True
-            messages.success(request, 'Account created successfully! You can now log in.')
+            # Create the user
+            user = form.save(commit=False)
+            user.is_staff = True  # Set user as staff (regular user, not superuser)
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.save()
+            
+            # Automatically create student profile
+            Student.objects.create(
+                FirstName=form.cleaned_data['first_name'],
+                LastName=form.cleaned_data['last_name'],
+                Email=form.cleaned_data['email'],
+                PhoneNumber=form.cleaned_data['phone_number'],
+                Department=form.cleaned_data['department']
+            )
+            
+            messages.success(request, 'Account created successfully! You can now log in and enroll in courses.')
             return redirect('Login')
         else:
             messages.error(request, 'Registration failed. Please check the form for errors.')
@@ -26,15 +40,50 @@ def register(request):
 # Profile View (Show student details and enrolled courses)
 @login_required
 def profile(request):
-    enrollments = Enrollment.objects.all()  # Admin can see all enrollments
     user_name = request.user.username
     user_email = request.user.email
     try:
-            student = Student.objects.get(Email=user_email)
+        student = Student.objects.get(Email=user_email)
+        # Get enrollments for this specific student
+        enrollments = Enrollment.objects.filter(student=student)
     except Student.DoesNotExist:
-            student = None
+        student = None
+        enrollments = []
 
-    return render(request, 'profile.html',{'student': student,'uname':user_name,'umail':user_email,'enrollments': enrollments})
+    # Use different template for regular users vs admin
+    if request.user.is_superuser:
+        return render(request, 'profile.html',{'student': student,'uname':user_name,'umail':user_email,'enrollments': enrollments})
+    else:
+        return render(request, 'student_profile.html',{'student': student,'uname':user_name,'umail':user_email,'enrollments': enrollments})
+
+
+@login_required
+def edit_profile(request):
+    """Allow students to edit their profile"""
+    try:
+        student = Student.objects.get(Email=request.user.email)
+    except Student.DoesNotExist:
+        messages.error(request, "Student profile not found.")
+        return redirect('Home')
+    
+    if request.method == 'POST':
+        # Update student information
+        student.FirstName = request.POST.get('first_name')
+        student.LastName = request.POST.get('last_name')
+        student.PhoneNumber = request.POST.get('phone_number')
+        student.Department = request.POST.get('department')
+        student.save()
+        
+        # Update user information
+        user = request.user
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.save()
+        
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('Profile')
+    
+    return render(request, 'edit_profile.html', {'student': student})
 
 # Logout View
 def logout(request):
@@ -84,7 +133,27 @@ def delete_course(request, id):
 @login_required
 def home(request):
     courses = Course.objects.all()
-    return render(request, 'home.html', {'courses': courses})
+    
+    # Check if user is admin/superuser
+    if request.user.is_superuser:
+        # Admin view - show all courses
+        return render(request, 'home.html', {'courses': courses})
+    
+    # Regular user view
+    try:
+        student = Student.objects.get(Email=request.user.email)
+        # Get user's enrollments
+        user_enrollments = Enrollment.objects.filter(student=student)
+        
+        return render(request, 'user_home.html', {
+            'student': student,
+            'user_enrollments': user_enrollments,
+            'enrolled_count': user_enrollments.count()
+        })
+    except Student.DoesNotExist:
+        # This should not happen with auto-creation, but handle it gracefully
+        messages.error(request, "Student profile not found. Please contact administrator.")
+        return redirect('main')
 
 # Main View (Landing page)
 def main(request):
@@ -242,18 +311,66 @@ def delete_enrollment(request, id):
 def enroll_course_view(request, course_id):
     if request.method == 'POST':
         course = get_object_or_404(Course, id=course_id)
+        
+        # Get the student record associated with the logged-in user's email
+        try:
+            student = Student.objects.get(Email=request.user.email)
+        except Student.DoesNotExist:
+            messages.error(request, "No student record found for your account. Please contact admin.")
+            return redirect('Home')
+        
         # Check if the user is already enrolled
-        if Enrollment.objects.filter(student=request.user, course=course).exists():
+        if Enrollment.objects.filter(student=student, course=course).exists():
             messages.warning(request, "You are already enrolled in this course.")
         else:
             # Create a new enrollment
-            Enrollment.objects.create(student=request.user, course=course)
-            messages.success(request, "You have successfully enrolled in the course.")
+            Enrollment.objects.create(student=student, course=course)
+            messages.success(request, f"Enrolled successfully in {course.CourseName}!")
 
-        return redirect('enrollment_page') 
+        return redirect('Home')
+
+
+@login_required
+def unenroll_course_view(request, enrollment_id):
+    """Allow users to unenroll from a course"""
+    try:
+        student = Student.objects.get(Email=request.user.email)
+        enrollment = get_object_or_404(Enrollment, id=enrollment_id, student=student)
+        course_name = enrollment.course.CourseName
+        enrollment.delete()
+        messages.success(request, f"You have successfully unenrolled from {course_name}.")
+    except Student.DoesNotExist:
+        messages.error(request, "Student record not found.")
+    
+    return redirect('Home') 
     
 
+@login_required
 @login_required
 def enroll_page_view(request):
     courses = Course.objects.all()
     return render(request, 'enroll_course.html', {'courses': courses})
+
+@login_required
+def available_courses(request):
+    """Show only available courses (not enrolled) for students to register"""
+    all_courses = Course.objects.all()
+
+    try:
+        student = Student.objects.get(Email=request.user.email)
+        # Get user's enrollments
+        user_enrollments = Enrollment.objects.filter(student=student)
+        enrolled_course_ids = user_enrollments.values_list('course_id', flat=True)
+
+        # Filter to show only courses not enrolled in
+        available_courses = all_courses.exclude(id__in=enrolled_course_ids)
+
+        return render(request, 'available_courses.html', {
+            'courses': available_courses,
+            'student': student,
+            'enrolled_count': user_enrollments.count(),
+            'total_courses': all_courses.count(),
+        })
+    except Student.DoesNotExist:
+        messages.error(request, "Student profile not found. Please contact administrator.")
+        return redirect('main')

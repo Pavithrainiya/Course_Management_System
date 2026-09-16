@@ -1,0 +1,241 @@
+{% extends 'index.html' %}
+
+{% block title %}
+   My Courses - Course Management System
+{% endblock title %}
+{% load static %} 
+{% block content %}
+
+{% if messages %}
+    <div class="container mt-4">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<h1 style="padding-bottom: 2%;">My Learning Dashboard</h1>
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h4 style="color:rgb(16, 138, 237)">Welcome {{ student.FirstName }} {{ student.LastName }}</h4>
+            <p>Your personalized learning journey starts here</p>
+        </div>
+    </div>
+</section>
+
+<section class="about-us">
+    <div class="container">
+        <h2>My Enrolled Courses</h2>
+        {% if user_enrollments %}
+            <div class="courses-grid">
+                {% for enrollment in user_enrollments %}
+                    <div class="course-card">
+                        <div class="course-header">
+                            <h4>{{ enrollment.course.CourseName }}</h4>
+                            <span class="course-code">{{ enrollment.course.CourseId }}</span>
+                        </div>
+                        <div class="course-body">
+                            <p>{{ enrollment.course.Description }}</p>
+                            <div class="course-status">
+                                <span class="status-badge enrolled">
+                                    <i class="fa fa-check-circle"></i> Currently Enrolled
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-courses">
+                <i class="fa fa-graduation-cap fa-3x"></i>
+                <h3>No Courses Enrolled Yet</h3>
+                <p>Start your learning journey by browsing and enrolling in available courses.</p>
+                <a href="{% url 'available_courses' %}" class="btn btn-primary">Browse Available Courses</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="services">
+    <div class="container">
+        <h2>Student Features</h2>
+        <div class="services-list">
+            <div class="service-item">
+                <h3>Course Enrollment</h3>
+                <p>
+                    Browse and enroll in available courses that match your interests and career goals. 
+                    Our easy enrollment process helps you get started quickly.
+                </p>
+            </div>
+            <div class="service-item">
+                <h3>Progress Tracking</h3>
+                <p>
+                    Monitor your learning progress with detailed insights into your course completion 
+                    and academic performance across all enrolled subjects.
+                </p>
+            </div>
+            <div class="service-item">
+                <h3>Learning Resources</h3>
+                <p>
+                    Access comprehensive learning materials, assignments, and resources to enhance 
+                    your educational experience and academic success.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="team">
+    <div class="container">
+        <h2>Quick Actions</h2>
+        <div class="team-grid">
+            <div class="team-member">
+                <img src="{% static '/images/team1.png' %}" alt="Available Courses" class="team-photo">
+                <h3>Browse Courses</h3>
+                <p>Find new courses to enroll in</p>
+                <a href="{% url 'available_courses' %}" class="btn btn-sm btn-primary">Browse Now</a>
+            </div>
+            <div class="team-member">
+                <img src="{% static '/images/team2.png' %}" alt="My Profile" class="team-photo">
+                <h3>My Profile</h3>
+                <p>Update your personal information</p>
+                <a href="{% url 'Profile' %}" class="btn btn-sm btn-secondary">View Profile</a>
+            </div>
+            <div class="team-member">
+                <img src="{% static '/images/team3.png' %}" alt="Academic Support" class="team-photo">
+                <h3>Academic Support</h3>
+                <p>Get help with your studies</p>
+                <a href="{% url 'About' %}" class="btn btn-sm btn-info">Get Help</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="contact">
+    <div class="container">
+        <h2>Need Help?</h2>
+        <p>Our student support team is here to assist you with any questions!</p>
+        <div class="contact-info">
+            <p>Email: student.support@mylearningplatform.com</p>
+            <p>Phone: +917299025956</p>
+            <p>Student Services: Available 24/7</p>
+        </div>
+    </div>
+</section>
+
+<style>
+    .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .course-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-left: 4px solid #007bff;
+        transition: transform 0.3s ease;
+    }
+    
+    .course-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .course-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .course-header h4 {
+        margin: 0;
+        color: #333;
+    }
+    
+    .course-code {
+        background: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .course-body p {
+        color: #666;
+        margin-bottom: 15px;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .status-badge.enrolled {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .no-courses {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    
+    .no-courses i {
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+    
+    .no-courses h3 {
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+</style>
+
+{% endblock content %}

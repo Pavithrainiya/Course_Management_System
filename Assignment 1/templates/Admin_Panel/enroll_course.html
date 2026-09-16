@@ -3,21 +3,6 @@
 {% block content %}
 <h2>Enroll in Courses</h2>
 <div class="container course-container">
-    {% for course in courses %}
-    <form method="POST" action="{% url 'enroll_course' course.id %}">
-        {% csrf_token %}
-        {% endfor %} 
-        <label for="course_id">Available Courses:</label>
-        <select name="course_id" id="course_id" required>
-            {% for course in courses %}  
-            <option value="">Select a course</option>
-                <option value="{{ course.id }}">{{ course.CourseName }}</option>
-            {% endfor %}
-        </select>
-
-        <button type="submit">Enroll</button>
-    </form>
-
     {% if messages %}
         <div class="message-container">
             {% for message in messages %}
@@ -25,5 +10,16 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    {% for course in courses %}
+    <div class="course-item">
+        <h3>{{ course.CourseName }}</h3>
+        <p>{{ course.Description }}</p>
+        <form method="POST" action="{% url 'enroll_course' course.id %}">
+            {% csrf_token %}
+            <button type="submit">Enroll in this Course</button>
+        </form>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

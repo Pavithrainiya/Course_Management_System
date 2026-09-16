@@ -6,14 +6,15 @@
         <ul class="sidebar-nav">
             {% if user.is_authenticated %}
                 <li><a href="{% url 'About' %}" class="menu-item"><i class="fa fa-info-circle"></i> About</a></li>
-                <li><a href="{% url 'Home' %}" class="menu-item"><i class="fa fa-home"></i> Home</a></li>
-                <li><a href="{% url 'Profile' %}" class="menu-item"><i class="fa fa-user"></i> Profile</a></li>
                 <li><a href="{% url 'Logout' %}" class="menu-item"><i class="fa fa-sign-out"></i> Logout</a></li>
                 
                 {% if user.is_staff and not user.is_superuser %}
-                    <li><a href="{% url 'Add_Student' %}" class="menu-item"><i class="fa fa-user-plus"></i> Create Student Profile</a></li>
-                    <li><a href="{% url 'enrollment_page' %}" class="menu-item"><i class="fa fa-graduation-cap"></i> Enroll Course</a></li>
-
+                    <!-- Student Course Navigation -->
+                    <li class="nav-section-header">
+                        <span class="section-title"><i class="fa fa-graduation-cap"></i> Course Management</span>
+                    </li>
+                    <li><a href="{% url 'Home' %}" class="menu-item course-nav"><i class="fa fa-list-alt"></i> My Courses</a></li>
+                    <li><a href="{% url 'available_courses' %}" class="menu-item course-nav"><i class="fa fa-search"></i> Available Courses</a></li>
                 {% endif %}
                 
                 {% if user.is_superuser %}
@@ -35,3 +36,37 @@
 
     </div>
 </div>
+
+<style>
+    .nav-section-header {
+        margin-top: 15px;
+        margin-bottom: 5px;
+        padding: 0 15px;
+    }
+    
+    .section-title {
+        color: #6c757d;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .course-nav {
+        background-color: #f8f9fa !important;
+        border-left: 3px solid #007bff;
+        margin: 2px 0;
+    }
+    
+    .course-nav:hover {
+        background-color: #e9ecef !important;
+        border-left-color: #0056b3;
+    }
+    
+    .course-nav i {
+        color: #007bff;
+    }
+</style>

@@ -1,0 +1,20 @@
+# Virtual Environment
+myenv/
+venv/
+ENV/
+env/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+
+# Frontend Node Modules & Build Outputs
+frontend/node_modules/
+frontend/dist/
+.vscode/
+
+# Temporary Scratch Scripts
+scratch/
+.system_generated/

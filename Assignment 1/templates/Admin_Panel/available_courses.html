@@ -1,0 +1,183 @@
+{% extends "index.html" %}
+
+{% block title %}
+   Available Courses
+{% endblock title %}
+
+{% block content %} 
+
+<div class="container" style="padding-top: 5%;">
+    <h2 class="page-header text-primary text-center">Available Courses</h2>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Available Courses Section -->
+    <div class="section-container">
+        <h3 class="text-success" style="margin-bottom: 20px;">
+            <i class="fa fa-book-open"></i> Courses Available for Registration ({{ courses|length }})
+        </h3>
+        
+        {% if courses %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th scope="col">S.No</th>
+                            <th scope="col">Course Code</th>
+                            <th scope="col">Course Name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for course in courses %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><strong>{{ course.CourseId }}</strong></td>
+                            <td>{{ course.CourseName }}</td>
+                            <td>{{ course.Description }}</td>
+                            <td>
+                                <form method="POST" action="{% url 'enroll_course' course.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa fa-user-plus"></i> Register Now
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">
+                <i class="fa fa-graduation-cap fa-3x mb-3"></i>
+                <h4>Great Job!</h4>
+                <p>You are already registered for all available courses.</p>
+                <a href="{% url 'Home' %}" class="btn btn-primary">
+                    <i class="fa fa-list"></i> View My Courses
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Registration Summary -->
+    <div class="row" style="margin-top: 30px;">
+        <div class="col-md-4">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fa fa-check-circle"></i> Registered
+                    </h5>
+                    <h2 class="text-success">{{ enrolled_count }}</h2>
+                    <p class="text-muted">Courses Enrolled</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">
+                        <i class="fa fa-clock"></i> Available
+                    </h5>
+                    <h2 class="text-warning">{{ courses|length }}</h2>
+                    <p class="text-muted">Ready to Register</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fa fa-book"></i> Total
+                    </h5>
+                    <h2 class="text-primary">{{ total_courses }}</h2>
+                    <p class="text-muted">Courses in System</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="text-center" style="margin-top: 30px;">
+        <a href="{% url 'Home' %}" class="btn btn-primary btn-lg">
+            <i class="fa fa-graduation-cap"></i> View My Registered Courses
+        </a>
+    </div>
+</div>
+
+<style>
+    .section-container {
+        background: #fff;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .thead-light th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        padding: 30px;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .card-body h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .fa-3x {
+        color: #17a2b8;
+    }
+</style>
+
+{% endblock %}

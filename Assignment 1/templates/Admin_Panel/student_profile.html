@@ -1,0 +1,564 @@
+{% extends "index.html" %}
+{% block content %}
+
+<div class="enrollment-page">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="welcome-card">
+                <div class="welcome-content">
+                    <h1 class="welcome-title">
+                        <i class="fa fa-user-circle"></i> My Profile
+                    </h1>
+                    <p class="welcome-subtitle">{{ student.FirstName }} {{ student.LastName }} - {{ student.Department }}</p>
+                </div>
+                <div class="stats-container">
+                    <div class="stat-box">
+                        <div class="stat-number">{{ enrollments|length }}</div>
+                        <div class="stat-label">Enrolled Courses</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">{{ student.id }}</div>
+                        <div class="stat-label">Student ID</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container main-content">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="custom-alert alert-{{ message.tags }} animate-in">
+                        <div class="alert-icon">
+                            <i class="fa {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% elif message.tags == 'error' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+                        </div>
+                        <div class="alert-content">
+                            <strong>
+                                {% if message.tags == 'success' %}Success!{% elif message.tags == 'warning' %}Warning!{% elif message.tags == 'error' %}Error!{% else %}Info{% endif %}
+                            </strong>
+                            <span>{{ message }}</span>
+                        </div>
+                        <button type="button" class="close-alert" onclick="this.parentElement.style.display='none'">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Personal Information Section -->
+        <div class="section-wrapper">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fa fa-user"></i> Personal Information
+                </h2>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-user"></i> First Name
+                    </div>
+                    <div class="info-value">{{ student.FirstName }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-user"></i> Last Name
+                    </div>
+                    <div class="info-value">{{ student.LastName }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-envelope"></i> Email
+                    </div>
+                    <div class="info-value">{{ student.Email }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-phone"></i> Phone Number
+                    </div>
+                    <div class="info-value">{{ student.PhoneNumber }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-building"></i> Department
+                    </div>
+                    <div class="info-value">{{ student.Department }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fa fa-id-badge"></i> Student ID
+                    </div>
+                    <div class="info-value">{{ student.id }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled Courses Section -->
+        <div class="section-wrapper">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fa fa-graduation-cap"></i> My Enrolled Courses
+                </h2>
+                <span class="course-count">{{ enrollments|length }} Course{{ enrollments|length|pluralize }}</span>
+            </div>
+            
+            {% if enrollments %}
+                <div class="courses-grid">
+                    {% for enrollment in enrollments %}
+                        <div class="course-card enrolled-card">
+                            <div class="course-badge enrolled-badge">
+                                <i class="fa fa-check"></i> Enrolled
+                            </div>
+                            <div class="course-header">
+                                <div class="course-code">{{ enrollment.course.CourseId }}</div>
+                                <h3 class="course-name">{{ enrollment.course.CourseName }}</h3>
+                            </div>
+                            <div class="course-body">
+                                <p class="course-description">{{ enrollment.course.Description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="course-footer">
+                                <a href="{% url 'Home' %}" class="btn-view-courses">
+                                    <i class="fa fa-eye"></i> View All Courses
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fa fa-inbox empty-icon"></i>
+                    <h3>No Enrolled Courses Yet</h3>
+                    <p>Start your learning journey by enrolling in courses</p>
+                    <a href="{% url 'Home' %}" class="btn-browse-courses">
+                        <i class="fa fa-book"></i> Browse Courses
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .enrollment-page {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding-bottom: 50px;
+    }
+
+    .hero-section {
+        padding: 80px 0 40px;
+        color: white;
+    }
+
+    .welcome-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: white;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+    }
+
+    .stats-container {
+        display: flex;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px 30px;
+        border-radius: 15px;
+        text-align: center;
+        flex: 1;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 5px;
+    }
+
+    .main-content {
+        margin-top: 30px;
+    }
+
+    .messages-container {
+        margin-bottom: 30px;
+        position: relative;
+        z-index: 1000;
+    }
+
+    .custom-alert {
+        background: white;
+        padding: 20px 25px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        border: 2px solid;
+        position: relative;
+    }
+
+    .animate-in {
+        animation: slideInDown 0.5s ease-out, pulse 0.3s ease-out 0.5s;
+    }
+
+    .alert-icon {
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .alert-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .alert-content strong {
+        font-size: 1.1rem;
+        display: block;
+    }
+
+    .alert-content span {
+        font-size: 0.95rem;
+    }
+
+    .alert-success { 
+        border-color: #28a745;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    }
+    .alert-success .alert-icon i { color: #28a745; }
+    .alert-success strong { color: #155724; }
+    .alert-success span { color: #155724; }
+
+    .close-alert {
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.3s;
+        font-size: 1.2rem;
+        padding: 5px;
+        color: inherit;
+    }
+
+    .close-alert:hover {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    .section-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin: 0;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 25px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        text-decoration: none;
+        color: white;
+    }
+
+    .course-count {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-label i {
+        color: #667eea;
+    }
+
+    .info-value {
+        color: #333;
+        font-size: 1.1rem;
+    }
+
+    .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    .course-card {
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 15px;
+        padding: 25px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border-color: #667eea;
+    }
+
+    .enrolled-card {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+    }
+
+    .course-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .enrolled-badge {
+        background: #28a745;
+        color: white;
+    }
+
+    .course-header {
+        margin-bottom: 15px;
+    }
+
+    .course-code {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 5px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .course-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #333;
+        margin: 10px 0;
+    }
+
+    .course-body {
+        margin: 15px 0;
+    }
+
+    .course-description {
+        color: #666;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .course-footer {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .btn-view-courses {
+        width: 100%;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-view-courses:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        text-decoration: none;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #999;
+        margin-bottom: 20px;
+    }
+
+    .btn-browse-courses {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-browse-courses:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        text-decoration: none;
+        color: white;
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 1.8rem;
+        }
+
+        .stats-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .courses-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+{% endblock %}
