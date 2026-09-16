@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: course-management-backend
+    env: python
+    rootDir: Assignment 1
+    buildCommand: pip install -r requirements.txt && python manage.py migrate
+    startCommand: gunicorn Django_Project.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USE_TLS
+        value: true
+      - key: EMAIL_HOST_USER
+        value: pavijeevi56@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        value: cxyb ynjw kgrw mluh
